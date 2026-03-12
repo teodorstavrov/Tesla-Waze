@@ -3,43 +3,47 @@ import { useEventsStore } from '../store/eventsStore'
 import { useUIStore } from '../store/uiStore'
 import { fetchEvents, fetchEVStations, fetchRiskZones } from '../services/api'
 import { wsService } from '../services/websocket'
-import { BoundingBox } from '../types'
+import { BoundingBox, LatLng } from '../types'
 
-const WAZE_INTERVAL = 10_000   // 10s
-const TRAFFIC_INTERVAL = 30_000 // 30s
-const EV_INTERVAL = 300_000    // 5min
+const WAZE_INTERVAL  = 10_000   // 10s
+const EV_INTERVAL    = 300_000  // 5min
 
 function getBBox(lat: number, lng: number, radiusKm = 15): BoundingBox {
   const delta = radiusKm / 111
   return {
     north: lat + delta,
     south: lat - delta,
-    east: lng + delta / Math.cos((lat * Math.PI) / 180),
-    west: lng - delta / Math.cos((lat * Math.PI) / 180)
+    east:  lng + delta / Math.cos((lat * Math.PI) / 180),
+    west:  lng - delta / Math.cos((lat * Math.PI) / 180),
   }
 }
 
 export function useDataPolling() {
-  const { userPosition, setEvents, setEVStations, setRiskZones, setLoading, setError } = useEventsStore()
+  const { mapCenter, setEvents, setEVStations, setRiskZones, setLoading, setError } = useEventsStore()
   const { layers } = useUIStore()
   const wazeTimer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const trafficTimer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const evTimer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const lastBBox = useRef<BoundingBox | null>(null)
+  const evTimer   = useRef<ReturnType<typeof setInterval> | null>(null)
+  const lastCenter = useRef<LatLng | null>(null)
 
   useEffect(() => {
-    if (!userPosition) return
+    // Always poll — uses GPS position when available, map center as fallback
+    const center = mapCenter
+    const bbox = getBBox(center.lat, center.lng)
 
-    const bbox = getBBox(userPosition.lat, userPosition.lng)
-    lastBBox.current = bbox
+    // Re-subscribe WebSocket only when center moves ~1km+
+    const moved = !lastCenter.current ||
+      Math.abs(center.lat - lastCenter.current.lat) > 0.01 ||
+      Math.abs(center.lng - lastCenter.current.lng) > 0.01
 
-    // Subscribe WebSocket to bbox
-    wsService.updateBBox(bbox)
+    if (moved) {
+      lastCenter.current = center
+      wsService.updateBBox(bbox)
+    }
 
     const fetchWazeData = async () => {
       try {
         setLoading(true)
-        const events = await fetchEvents(bbox)
+        const events = await fetchEvents(getBBox(center.lat, center.lng))
         setEvents(events)
         setError(null)
       } catch (err) {
@@ -54,7 +58,7 @@ export function useDataPolling() {
       const evLayer = layers.find(l => l.id === 'ev_station')
       if (!evLayer?.enabled) return
       try {
-        const stations = await fetchEVStations(bbox)
+        const stations = await fetchEVStations(getBBox(center.lat, center.lng, 10))
         setEVStations(stations)
       } catch (err) {
         console.error('[DataPolling] EV error:', err)
@@ -65,7 +69,7 @@ export function useDataPolling() {
       const riskLayer = layers.find(l => l.id === 'risk_zones')
       if (!riskLayer?.enabled) return
       try {
-        const zones = await fetchRiskZones(bbox)
+        const zones = await fetchRiskZones(getBBox(center.lat, center.lng))
         setRiskZones(zones)
       } catch (err) {
         console.error('[DataPolling] Risk error:', err)
@@ -77,15 +81,15 @@ export function useDataPolling() {
     fetchEVData()
     fetchRiskData()
 
-    // Polling intervals
+    if (wazeTimer.current) clearInterval(wazeTimer.current)
+    if (evTimer.current)   clearInterval(evTimer.current)
+
     wazeTimer.current = setInterval(fetchWazeData, WAZE_INTERVAL)
-    trafficTimer.current = setInterval(fetchWazeData, TRAFFIC_INTERVAL)
-    evTimer.current = setInterval(fetchEVData, EV_INTERVAL)
+    evTimer.current   = setInterval(fetchEVData, EV_INTERVAL)
 
     return () => {
       if (wazeTimer.current) clearInterval(wazeTimer.current)
-      if (trafficTimer.current) clearInterval(trafficTimer.current)
-      if (evTimer.current) clearInterval(evTimer.current)
+      if (evTimer.current)   clearInterval(evTimer.current)
     }
-  }, [userPosition?.lat, userPosition?.lng]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mapCenter.lat, mapCenter.lng]) // eslint-disable-line react-hooks/exhaustive-deps
 }

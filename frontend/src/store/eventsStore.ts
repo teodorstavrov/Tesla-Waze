@@ -6,6 +6,7 @@ interface EventsState {
   evStations: EVStation[]
   riskZones: RiskZone[]
   userPosition: LatLng | null
+  mapCenter: LatLng           // map center — used as fallback when no GPS
   userHeading: number
   userSpeed: number // km/h
   lastUpdated: number
@@ -23,6 +24,7 @@ interface EventsState {
   setEVStations: (stations: EVStation[]) => void
   setRiskZones: (zones: RiskZone[]) => void
   setUserPosition: (pos: LatLng, heading?: number, speed?: number) => void
+  setMapCenter: (pos: LatLng) => void
   setLoading: (v: boolean) => void
   setError: (e: string | null) => void
   computeNearby: () => void
@@ -43,6 +45,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   evStations: [],
   riskZones: [],
   userPosition: null,
+  mapCenter: { lat: 51.505, lng: -0.09 }, // default London — replaced on first GPS/map move
   userHeading: 0,
   userSpeed: 0,
   lastUpdated: 0,
@@ -72,9 +75,11 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   setRiskZones: (riskZones) => set({ riskZones }),
 
   setUserPosition: (pos, heading = 0, speed = 0) => {
-    set({ userPosition: pos, userHeading: heading, userSpeed: speed })
+    set({ userPosition: pos, mapCenter: pos, userHeading: heading, userSpeed: speed })
     get().computeNearby()
   },
+
+  setMapCenter: (mapCenter) => set({ mapCenter }),
 
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),

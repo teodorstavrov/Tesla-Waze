@@ -3,20 +3,17 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/events",           "destination": "/api/events" },
+    { "source": "/api/reports",          "destination": "/api/reports" },
+    { "source": "/api/routes/geocode",   "destination": "/api/routes/geocode" },
+    { "source": "/api/health",           "destination": "/api/health" },
+    { "source": "/((?!api/).*)",         "destination": "/index.html" }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
       ]
     }
   ]

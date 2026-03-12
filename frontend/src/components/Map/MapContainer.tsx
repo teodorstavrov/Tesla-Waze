@@ -47,12 +47,15 @@ function UserFollower() {
   return null
 }
 
-// Emit bbox to websocket on move + track zoom
+// Emit bbox + update map center for data polling + track zoom
 function BBoxEmitter() {
   const setZoom = useUIStore(s => s.setZoom)
+  const setMapCenter = useEventsStore(s => s.setMapCenter)
   useMapEvents({
     moveend(e) {
       const bounds = e.target.getBounds()
+      const center = e.target.getCenter()
+      setMapCenter({ lat: center.lat, lng: center.lng })
       wsService.updateBBox({
         north: bounds.getNorth(),
         south: bounds.getSouth(),
