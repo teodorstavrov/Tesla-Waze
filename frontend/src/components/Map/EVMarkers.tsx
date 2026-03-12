@@ -52,7 +52,7 @@ export const EVMarkers: React.FC = () => {
       cluster.addLayer(marker)
     })
 
-    return () => cluster.clearLayers()
+    return () => { cluster.clearLayers() }
   }, [map, evStations])
 
   useEffect(() => {

@@ -47,8 +47,9 @@ function UserFollower() {
   return null
 }
 
-// Emit bbox to websocket on move
+// Emit bbox to websocket on move + track zoom
 function BBoxEmitter() {
+  const setZoom = useUIStore(s => s.setZoom)
   useMapEvents({
     moveend(e) {
       const bounds = e.target.getBounds()
@@ -58,6 +59,9 @@ function BBoxEmitter() {
         east: bounds.getEast(),
         west: bounds.getWest()
       })
+    },
+    zoomend(e) {
+      setZoom(e.target.getZoom())
     }
   })
   return null
@@ -70,7 +74,6 @@ interface Props {
 export const MapView: React.FC<Props> = ({ className = '' }) => {
   const mapStyle = useUIStore(s => s.mapStyle)
   const layers = useUIStore(s => s.layers)
-  const setZoom = useUIStore(s => s.setZoom)
 
   const defaultCenter: LatLngExpression = [51.505, -0.09]
 
@@ -86,9 +89,6 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
       zoomControl={false}
       className={`w-full h-full ${className}`}
       style={{ background: '#0a0a0a' }}
-      whenReady={(map) => {
-        map.target.on('zoomend', () => setZoom(map.target.getZoom()))
-      }}
     >
       {/* Base tile layer */}
       <TileLayer
