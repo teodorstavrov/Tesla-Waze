@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(Start-Process \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(Start-Process \"$env:LOCALAPPDATA\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(docker info:*)"
+    ]
+  }
+}

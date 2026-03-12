@@ -1,0 +1,31 @@
+{
+  "name": "Tesla Intelligence",
+  "short_name": "TeslaNav",
+  "description": "Advanced real-time driving intelligence dashboard for Tesla",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "categories": ["navigation", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Navigate",
+      "short_name": "Navigate",
+      "description": "Start route navigation",
+      "url": "/?panel=route",
+      "icons": [{ "src": "/icons/shortcut-nav.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Find Charging",
+      "short_name": "Charging",
+      "description": "Find EV charging stations",
+      "url": "/?panel=ev",
+      "icons": [{ "src": "/icons/shortcut-ev.png", "sizes": "96x96" }]
+    }
+  ]
+}
