@@ -8,7 +8,9 @@
     { "source": "/api/reports",            "destination": "/api/reports" },
     { "source": "/api/routes/calculate",   "destination": "/api/routes/calculate" },
     { "source": "/api/routes/geocode",     "destination": "/api/routes/geocode" },
+    { "source": "/api/ev/stations/:id",    "destination": "/api/ev/stations/[id]" },
     { "source": "/api/ev/stations",        "destination": "/api/ev/stations" },
+    { "source": "/api/reports/:id/vote",   "destination": "/api/reports/[id]/vote" },
     { "source": "/api/risk/zones",         "destination": "/api/risk/zones" },
     { "source": "/api/health",             "destination": "/api/health" },
     { "source": "/((?!api/).*)",           "destination": "/index.html" }
