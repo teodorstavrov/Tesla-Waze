@@ -3,7 +3,7 @@ import { TrafficEvent, EVStation, Route, RouteMode, BoundingBox, LatLng, UserRep
 
 const client = axios.create({
   baseURL: '/api',
-  timeout: 8000,
+  timeout: 25000,
   headers: { 'Content-Type': 'application/json' }
 })
 

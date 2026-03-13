@@ -8,11 +8,10 @@ export const config = {
 
 // ─── Overpass — speed cameras from OpenStreetMap ──────────────────────────────
 async function fetchOverpass(south, west, north, east) {
-  const query = `[out:json][timeout:15];
+  const query = `[out:json][timeout:10];
 (
   node["highway"="speed_camera"](${south},${west},${north},${east});
   node["enforcement"="maxspeed"](${south},${west},${north},${east});
-  node["highway"="stop"](${south},${west},${north},${east});
 );
 out body;`
 
@@ -20,7 +19,7 @@ out body;`
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `data=${encodeURIComponent(query)}`,
-    signal: AbortSignal.timeout(18000),
+    signal: AbortSignal.timeout(12000),
   })
   if (!res.ok) throw new Error(`Overpass ${res.status}`)
   const data = await res.json()
