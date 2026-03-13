@@ -14,8 +14,8 @@ export default async function handler(req) {
     })
   }
 
-  const lat = (north + south) / 2
-  const lng = (east + west) / 2
+  const lat    = (north + south) / 2
+  const lng    = (east + west) / 2
   const apiKey = process.env.OPENCHARGEMAP_API_KEY ?? ''
 
   try {
@@ -26,27 +26,36 @@ export default async function handler(req) {
     if (!res.ok) throw new Error(`OCM ${res.status}`)
     const data = await res.json()
 
-    const stations = (data ?? []).map(s => {
-      const addr = s.AddressInfo ?? {}
-      const conns = (s.Connections ?? []).map(c => ({
-        id: String(c.ID ?? ''),
-        type: c.ConnectionType?.Title ?? 'Unknown',
-        powerKW: c.PowerKW ?? null,
-        status: c.StatusType?.IsOperational ? 'available' : 'unknown',
-      }))
-      return {
-        id: `ocm-${s.ID}`,
-        name: addr.Title ?? 'EV Station',
-        position: { lat: addr.Latitude, lng: addr.Longitude },
-        operator: s.OperatorInfo?.Title ?? null,
-        connectors: conns,
-        totalPoints: s.NumberOfPoints ?? conns.length,
-        availablePoints: conns.filter(c => c.status === 'available').length,
-        status: 'operational',
-        isFree: s.UsageCost === 'Free' || s.UsageCost?.toLowerCase().includes('free'),
-        source: 'ocm',
-      }
-    })
+    const stations = (data ?? [])
+      .filter(s => {
+        const a = s.AddressInfo ?? {}
+        // Skip stations with missing or invalid coordinates
+        return typeof a.Latitude === 'number' && typeof a.Longitude === 'number' &&
+               !isNaN(a.Latitude) && !isNaN(a.Longitude)
+      })
+      .map(s => {
+        const addr  = s.AddressInfo ?? {}
+        const conns = (s.Connections ?? []).map(c => ({
+          type:      c.ConnectionType?.Title ?? 'Unknown',
+          powerKw:   c.PowerKW ?? 0,
+          available: c.StatusType?.IsOperational === true,
+          total:     1,
+        }))
+        const availablePorts = conns.filter(c => c.available).length
+        const totalPorts     = s.NumberOfPoints ?? conns.length ?? 1
+        return {
+          id:             `ocm-${s.ID}`,
+          name:           addr.Title ?? 'EV Station',
+          position:       { lat: addr.Latitude, lng: addr.Longitude },
+          operator:       s.OperatorInfo?.Title ?? 'Unknown',
+          connectors:     conns,
+          totalPorts,
+          availablePorts,
+          isTesla:        (s.OperatorInfo?.Title ?? '').toLowerCase().includes('tesla'),
+          amenities:      [],
+          pricePerKwh:    undefined,
+        }
+      })
 
     return new Response(JSON.stringify({ stations }), {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 's-maxage=300', 'Access-Control-Allow-Origin': '*' }

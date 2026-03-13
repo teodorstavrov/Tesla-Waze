@@ -32,12 +32,14 @@ export default async function handler(req) {
     const routes = modeList.map((mode, i) => ({
       id: `route-${i}`,
       mode,
-      distance: base.distance,
-      duration: base.duration,
-      polyline: base.polyline,
-      events: [],
-      riskScore: 0,
-      cameraCount: 0,
+      waypoints:       [origin, destination],
+      distanceMeters:  base.distance,
+      durationSeconds: base.duration,
+      polyline:        base.polyline,
+      summary: {
+        policeCount: 0, cameraCount: 0, accidentCount: 0,
+        hazardCount: 0, constructionCount: 0, trafficLevel: 'none', riskScore: 0,
+      },
       color: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i] ?? '#6b7280',
     }))
 
