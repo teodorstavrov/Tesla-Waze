@@ -54,12 +54,14 @@ async function fetchTomTom(south, west, north, east, apiKey) {
   const TYPE = { 1:'accident',2:'hazard',3:'construction',4:'road_closure',5:'road_closure',6:'traffic',7:'traffic',8:'traffic',9:'hazard',14:'construction' }
   return (data.incidents ?? []).map(inc => {
     const p = inc.properties ?? {}
-    const c = inc.geometry?.coordinates ?? [0,0]
+    // coordinates is a LineString (array of [lng,lat] pairs) — use the first point
+    const coords = inc.geometry?.coordinates
+    const pt = Array.isArray(coords?.[0]) ? coords[0] : (coords ?? [0, 0])
     const ev = (p.events ?? [])[0] ?? {}
     return {
       id: `tt-${p.id}`,
       type: TYPE[ev.iconCategory] ?? 'traffic',
-      position: { lat: c[1], lng: c[0] },
+      position: { lat: pt[1], lng: pt[0] },
       title: ev.description ?? 'Traffic incident',
       severity: Math.min(5, Math.max(1, p.magnitudeOfDelay ?? 1)),
       confidence: 90,
