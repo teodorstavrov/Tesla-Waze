@@ -11,7 +11,12 @@ class WebSocketService {
   connect() {
     if (this.socket?.connected) return
 
-    this.socket = io('/', {
+    // Only connect when a backend WS URL is explicitly configured.
+    // On Vercel (no backend) VITE_WS_URL is unset → skip silently.
+    const wsUrl = import.meta.env.VITE_WS_URL as string | undefined
+    if (!wsUrl && !import.meta.env.DEV) return
+
+    this.socket = io(wsUrl ?? '/', {
       transports: ['websocket', 'polling'],
       reconnectionDelay: 2000,
       reconnectionAttempts: 10

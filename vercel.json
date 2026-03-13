@@ -3,12 +3,15 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install",
   "rewrites": [
-    { "source": "/api/events/route",     "destination": "/api/events/route" },
-    { "source": "/api/events",           "destination": "/api/events" },
-    { "source": "/api/reports",          "destination": "/api/reports" },
-    { "source": "/api/routes/geocode",   "destination": "/api/routes/geocode" },
-    { "source": "/api/health",           "destination": "/api/health" },
-    { "source": "/((?!api/).*)",         "destination": "/index.html" }
+    { "source": "/api/events/route",       "destination": "/api/events/route" },
+    { "source": "/api/events",             "destination": "/api/events" },
+    { "source": "/api/reports",            "destination": "/api/reports" },
+    { "source": "/api/routes/calculate",   "destination": "/api/routes/calculate" },
+    { "source": "/api/routes/geocode",     "destination": "/api/routes/geocode" },
+    { "source": "/api/ev/stations",        "destination": "/api/ev/stations" },
+    { "source": "/api/risk/zones",         "destination": "/api/risk/zones" },
+    { "source": "/api/health",             "destination": "/api/health" },
+    { "source": "/((?!api/).*)",           "destination": "/index.html" }
   ],
   "headers": [
     {

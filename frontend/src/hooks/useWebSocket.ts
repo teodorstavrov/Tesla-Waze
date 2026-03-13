@@ -4,7 +4,7 @@ import { useEventsStore } from '../store/eventsStore'
 import { TrafficEvent, EVStation, WsMessage } from '../types'
 
 export function useWebSocket() {
-  const { addEvent, removeEvent, setEVStations, evStations } = useEventsStore()
+  const { addEvent, removeEvent, setEVStations } = useEventsStore()
 
   useEffect(() => {
     wsService.connect()
@@ -19,14 +19,15 @@ export function useWebSocket() {
       }),
       wsService.subscribe('ev:availability', (msg: WsMessage) => {
         const updated = msg.payload as Partial<EVStation> & { id: string }
-        setEVStations(
-          evStations.map(s => s.id === updated.id ? { ...s, ...updated } : s)
-        )
+        useEventsStore.setState(s => ({
+          evStations: s.evStations.map(st => st.id === updated.id ? { ...st, ...updated } : st)
+        }))
       })
     ]
 
     return () => {
       unsubs.forEach(u => u())
+      wsService.disconnect()
     }
-  }, [addEvent, removeEvent, setEVStations, evStations])
+  }, [addEvent, removeEvent, setEVStations])
 }
