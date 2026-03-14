@@ -4,7 +4,7 @@
 
 export const config = { runtime: 'edge' }
 
-const REPORTS_KEY = 'teslawaze_reports'
+const REPORTS_KEY = 'teslawaze_reports_v2'
 const TTL_SECONDS = 7 * 24 * 3600  // 7 days — removed manually by nearby users
 
 // ─── Upstash Redis REST helpers ───────────────────────────────────────────────

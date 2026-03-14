@@ -1,7 +1,7 @@
 // DELETE /api/reports/:id — remove a report (manual dismissal by nearby user)
 export const config = { runtime: 'edge' }
 
-const REPORTS_KEY = 'teslawaze_reports'
+const REPORTS_KEY = 'teslawaze_reports_v2'
 
 async function redisGet(url, token, key) {
   const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
