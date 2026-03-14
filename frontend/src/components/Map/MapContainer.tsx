@@ -26,6 +26,49 @@ const TILE_ATTRIBUTIONS = {
   traffic: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CARTO',
 }
 
+// Recenter button — flies map back to user position
+function RecenterButton() {
+  const map          = useMap()
+  const userPosition = useEventsStore(s => s.userPosition)
+
+  if (!userPosition) return null
+
+  const handleClick = () => {
+    map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), {
+      animate: true,
+      duration: 0.8,
+    })
+  }
+
+  return (
+    <div
+      className="leaflet-bottom leaflet-right"
+      style={{ pointerEvents: 'auto', zIndex: 1000, marginBottom: '90px', marginRight: '8px' }}
+    >
+      <div className="leaflet-control">
+        <button
+          onClick={handleClick}
+          title="Recenter"
+          style={{
+            width: 48, height: 48,
+            background: 'rgba(15,15,15,0.92)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22, cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+            transition: 'transform 0.1s',
+          }}
+          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
+          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          🎯
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // Follow user position
 function UserFollower() {
   const map = useMap()
@@ -104,9 +147,10 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
       {/* Zoom control top-right (Tesla-friendly) */}
       <ZoomControl position="topright" />
 
-      {/* Auto-follow user */}
+      {/* Auto-follow user + recenter */}
       <UserFollower />
       <BBoxEmitter />
+      <RecenterButton />
 
       {/* User position */}
       <UserMarker />
