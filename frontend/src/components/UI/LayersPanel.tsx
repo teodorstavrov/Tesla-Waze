@@ -13,7 +13,7 @@ export const LayersPanel: React.FC = () => {
       <div className="flex flex-col gap-2">
         <div className="text-tesla-muted text-xs uppercase tracking-wide">Map Style</div>
         <div className="grid grid-cols-3 gap-2">
-          {(['dark', 'satellite', 'traffic'] as const).map(style => (
+          {(['light', 'dark', 'satellite'] as const).map(style => (
             <button
               key={style}
               onClick={() => setMapStyle(style)}
@@ -23,7 +23,7 @@ export const LayersPanel: React.FC = () => {
                   : 'bg-black/20 border-tesla-border text-tesla-muted'
                 }`}
             >
-              {style === 'dark' ? '🌙 Dark' : style === 'satellite' ? '🛰️ Satellite' : '🚦 Traffic'}
+              {style === 'light' ? '☀️ Day' : style === 'dark' ? '🌙 Night' : '🛰️ Satellite'}
             </button>
           ))}
         </div>
