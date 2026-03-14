@@ -94,6 +94,10 @@ export const voteReport = async (id: string, vote: 'up' | 'down'): Promise<void>
   await client.post(`/reports/${id}/vote`, { vote })
 }
 
+export const deleteReport = async (id: string): Promise<void> => {
+  await client.delete(`/reports/${id}`)
+}
+
 // ─── Risk Zones ───────────────────────────────────────────────────────────────
 export const fetchRiskZones = async (bbox: BoundingBox) => {
   const { data } = await client.get('/risk/zones', {

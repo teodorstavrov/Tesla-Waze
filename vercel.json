@@ -12,6 +12,7 @@
     { "source": "/api/ev/stations/:id",    "destination": "/api/ev/stations/[id]" },
     { "source": "/api/ev/stations",        "destination": "/api/ev/stations" },
     { "source": "/api/reports/:id/vote",   "destination": "/api/reports/[id]/vote" },
+    { "source": "/api/reports/:id",        "destination": "/api/reports/[id]" },
     { "source": "/api/risk/zones",         "destination": "/api/risk/zones" },
     { "source": "/api/health",             "destination": "/api/health" },
     { "source": "/((?!api/).*)",           "destination": "/index.html" }
