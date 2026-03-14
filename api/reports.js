@@ -80,11 +80,8 @@ export default async function handler(req) {
 
     const all    = await loadReports(redisUrl, redisToken)
     const now    = new Date()
-    const active = all.filter(r =>
-      new Date(r.expiresAt) > now &&
-      r.lat >= south && r.lat <= north &&
-      r.lng >= west  && r.lng <= east
-    )
+    // Return all non-expired reports (no bbox filter — reports are sparse, client renders only visible ones)
+    const active = all.filter(r => new Date(r.expiresAt) > now)
 
     return new Response(JSON.stringify({ reports: active, total: active.length }), { headers: corsHeaders })
   }

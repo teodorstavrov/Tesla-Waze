@@ -26,11 +26,11 @@ export const ReportPanel: React.FC = () => {
 
     setLoading(true)
     try {
-      await submitReport(type, userPosition)
+      const serverReport = await submitReport(type, userPosition)
 
-      // Immediately show on map — don't wait for next poll
+      // Immediately show on map using the real server ID so polling deduplicates correctly
       const localEvent: TrafficEvent = {
-        id: `report-local-${Date.now()}`,
+        id: `report-${serverReport.id}`,
         type: type as TrafficEvent['type'],
         position: userPosition,
         title: LABELS[type] ?? label,
@@ -38,8 +38,8 @@ export const ReportPanel: React.FC = () => {
         confidence: 70,
         votes: 1,
         source: 'user_report',
-        reportedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+        reportedAt: serverReport.createdAt ?? new Date().toISOString(),
+        expiresAt: serverReport.expiresAt ?? new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
       }
       addEvent(localEvent)
 
