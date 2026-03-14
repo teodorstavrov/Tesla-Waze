@@ -6,6 +6,7 @@
     { "source": "/api/waze",               "destination": "/api/waze" },
     { "source": "/api/events/route",       "destination": "/api/events/route" },
     { "source": "/api/events",             "destination": "/api/events" },
+    { "source": "/api/debug-redis",        "destination": "/api/debug-redis" },
     { "source": "/api/reports",            "destination": "/api/reports" },
     { "source": "/api/routes/calculate",   "destination": "/api/routes/calculate" },
     { "source": "/api/routes/geocode",     "destination": "/api/routes/geocode" },
