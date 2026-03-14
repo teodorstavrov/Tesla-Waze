@@ -34,8 +34,7 @@ export default defineConfig({
           },
           {
             urlPattern: /\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'api-cache', networkTimeoutSeconds: 5 }
+            handler: 'NetworkOnly',
           }
         ]
       }
