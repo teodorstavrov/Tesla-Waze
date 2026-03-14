@@ -15,6 +15,13 @@ export const fetchEvents = async (bbox: BoundingBox): Promise<TrafficEvent[]> =>
   return data.events ?? []
 }
 
+export const fetchWazeAlerts = async (bbox: BoundingBox): Promise<TrafficEvent[]> => {
+  const { data } = await client.get('/waze', {
+    params: { north: bbox.north, south: bbox.south, east: bbox.east, west: bbox.west }
+  })
+  return data.events ?? []
+}
+
 export const fetchEventsAlongRoute = async (polyline: LatLng[]): Promise<TrafficEvent[]> => {
   const { data } = await client.post('/events/route', { polyline, bufferMeters: 200 })
   return data.events ?? []
