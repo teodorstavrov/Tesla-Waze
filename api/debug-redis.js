@@ -17,10 +17,10 @@ export default async function handler(req) {
 
   try {
     // SET
-    const setRes  = await fetch(`${url}/set/${testKey}`, {
+    const setRes  = await fetch(`${url}/set/${testKey}/EX/60`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([testVal, 'EX', 60]),
+      headers: { Authorization: `Bearer ${token}` },
+      body: testVal,
       signal: AbortSignal.timeout(8000),
     })
     const setData = await setRes.json()

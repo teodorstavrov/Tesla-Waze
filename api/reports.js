@@ -18,10 +18,11 @@ async function redisGet(url, token, key) {
 }
 
 async function redisSet(url, token, key, value, exSeconds) {
-  const res = await fetch(`${url}/set/${encodeURIComponent(key)}`, {
+  // Upstash REST: EX goes in the URL path, value is the raw body string
+  const res = await fetch(`${url}/set/${encodeURIComponent(key)}/EX/${exSeconds}`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify([value, 'EX', exSeconds]),
+    headers: { Authorization: `Bearer ${token}` },
+    body: value,
     signal: AbortSignal.timeout(8000),
   })
   const data = await res.json()

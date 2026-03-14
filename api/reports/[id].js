@@ -13,10 +13,10 @@ async function redisGet(url, token, key) {
 }
 
 async function redisSet(url, token, key, value) {
-  await fetch(`${url}/set/${encodeURIComponent(key)}`, {
+  await fetch(`${url}/set/${encodeURIComponent(key)}/EX/604800`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify([value, 'EX', 604800]), // 7 days max TTL
+    headers: { Authorization: `Bearer ${token}` },
+    body: value,
     signal: AbortSignal.timeout(5000),
   })
 }
