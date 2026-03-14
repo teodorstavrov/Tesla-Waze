@@ -83,7 +83,11 @@ export default async function handler(req) {
     // Return all non-expired reports (no bbox filter — reports are sparse, client renders only visible ones)
     const active = all.filter(r => new Date(r.expiresAt) > now)
 
-    return new Response(JSON.stringify({ reports: active, total: active.length }), { headers: corsHeaders })
+    return new Response(JSON.stringify({
+      reports: active,
+      total: active.length,
+      _debug: { using_redis: !!(redisUrl && redisToken), all_count: all.length }
+    }), { headers: corsHeaders })
   }
 
   // ── POST new report ────────────────────────────────────────────────────────
