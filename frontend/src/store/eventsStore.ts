@@ -56,7 +56,12 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   nextCamera: null,
 
   setEvents: (events) => {
-    set({ events, lastUpdated: Date.now() })
+    // Preserve existing user_report events not returned by this poll
+    // (guards against fetchReports network failure or Redis hiccup wiping local reports)
+    const existing = get().events
+    const newIds = new Set(events.map(e => e.id))
+    const keepReports = existing.filter(e => e.source === 'user_report' && !newIds.has(e.id))
+    set({ events: [...events, ...keepReports], lastUpdated: Date.now() })
     get().computeNearby()
   },
 
