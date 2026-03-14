@@ -9,7 +9,7 @@ interface UIState {
   isDrivingMode: boolean
   showSpeedometer: boolean
   pendingAlerts: VoiceAlert[]
-  mapStyle: 'dark' | 'satellite' | 'traffic'
+  mapStyle: 'light' | 'dark' | 'satellite'
   zoom: number
 
   setActivePanel: (panel: PanelId | null) => void
@@ -20,6 +20,7 @@ interface UIState {
   setVoiceEnabled: (v: boolean) => void
   setDrivingMode: (v: boolean) => void
   setMapStyle: (s: UIState['mapStyle']) => void
+  toggleDayNight: () => void
   setZoom: (z: number) => void
 }
 
@@ -42,7 +43,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   isDrivingMode: true,
   showSpeedometer: true,
   pendingAlerts: [],
-  mapStyle: 'dark',
+  mapStyle: 'light',
   zoom: 14,
 
   setActivePanel: (activePanel) => set({ activePanel }),
@@ -75,5 +76,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setVoiceEnabled: (voiceEnabled) => set({ voiceEnabled }),
   setDrivingMode: (isDrivingMode) => set({ isDrivingMode }),
   setMapStyle: (mapStyle) => set({ mapStyle }),
+  toggleDayNight: () => set(s => ({ mapStyle: s.mapStyle === 'dark' ? 'light' : 'dark' })),
   setZoom: (zoom) => set({ zoom }),
 }))

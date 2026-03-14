@@ -6,7 +6,7 @@ import { useUIStore } from '../../store/uiStore'
 export const TopBar: React.FC = () => {
   const { userSpeed, nextPolice, nextCamera, nearbyEvents } = useEventsStore()
   const { activeRoute, isNavigating } = useRouteStore()
-  const { voiceEnabled, setVoiceEnabled, togglePanel } = useUIStore()
+  const { voiceEnabled, setVoiceEnabled, togglePanel, mapStyle, toggleDayNight } = useUIStore()
 
   const riskScore = activeRoute?.summary.riskScore ?? 0
   const riskColor = riskScore < 30 ? 'text-green-400' : riskScore < 60 ? 'text-yellow-400' : 'text-red-400'
@@ -62,6 +62,15 @@ export const TopBar: React.FC = () => {
             </span>
           </div>
         )}
+
+        {/* Day / Night toggle */}
+        <button
+          onClick={toggleDayNight}
+          className="bg-tesla-panel/90 backdrop-blur-sm border border-tesla-border rounded-2xl p-2 w-11 h-11 flex items-center justify-center active:scale-95 transition-transform"
+          title={mapStyle === 'dark' ? 'Switch to day mode' : 'Switch to night mode'}
+        >
+          <span className="text-lg">{mapStyle === 'dark' ? '☀️' : '🌙'}</span>
+        </button>
 
         {/* Voice toggle */}
         <button
