@@ -56,7 +56,11 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   nextCamera: null,
 
   setEvents: (events) => {
-    set({ events, lastUpdated: Date.now() })
+    // Preserve any locally-added user reports not yet returned by the server
+    const existing = get().events
+    const newIds = new Set(events.map(e => e.id))
+    const keepLocal = existing.filter(e => e.source === 'user_report' && !newIds.has(e.id))
+    set({ events: [...events, ...keepLocal], lastUpdated: Date.now() })
     get().computeNearby()
   },
 

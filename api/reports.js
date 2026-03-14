@@ -45,7 +45,7 @@ async function loadReports(redisUrl, redisToken) {
 async function saveReports(redisUrl, redisToken, reports) {
   if (redisUrl && redisToken) {
     try {
-      await redisSet(redisUrl, redisToken, REPORTS_KEY, JSON.stringify(reports), 86400)
+      await redisSet(redisUrl, redisToken, REPORTS_KEY, JSON.stringify(reports), TTL_SECONDS)
       return
     } catch (err) {
       console.error('Redis SET error:', err.message)
