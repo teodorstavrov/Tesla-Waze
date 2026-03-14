@@ -108,6 +108,7 @@ export interface UserReport {
   position: LatLng
   userId?: string
   createdAt: string
+  expiresAt?: string
   upvotes: number
   downvotes: number
   confirmed: boolean
