@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { useEventsStore } from '../store/eventsStore'
 import { useUIStore } from '../store/uiStore'
 import { fetchEvents, fetchWazeAlerts, fetchEVStations, fetchRiskZones } from '../services/api'
-import { fetchWazeDirect } from '../services/wazeClient'
 import { wsService } from '../services/websocket'
 import { BoundingBox, LatLng } from '../types'
 
@@ -45,28 +44,15 @@ export function useDataPolling() {
       try {
         setLoading(true)
         const bbox = getBBox(center.lat, center.lng)
-        // 3 sources in parallel:
-        // 1. Waze direct from browser (police/accidents/hazards — bypasses server blocking)
-        // 2. /api/waze (TomTom fallback via server)
-        // 3. /api/events (OSM speed cameras)
-        const [wazeDirect, serverAlerts, cameras] = await Promise.allSettled([
-          fetchWazeDirect(bbox),
+        const [alerts, cameras] = await Promise.allSettled([
           fetchWazeAlerts(bbox),
           fetchEvents(bbox),
         ])
-
-        // Merge all sources, deduplicate by position+type
-        const all = [
-          ...(wazeDirect.status === 'fulfilled' ? wazeDirect.value : []),
-          ...(serverAlerts.status === 'fulfilled' ? serverAlerts.value : []),
+        const combined = [
+          ...(alerts.status === 'fulfilled' ? alerts.value : []),
           ...(cameras.status === 'fulfilled' ? cameras.value : []),
         ]
-        const seen = new Map<string, typeof all[0]>()
-        for (const e of all) {
-          const key = `${e.type}:${Math.round(e.position.lat * 100)},${Math.round(e.position.lng * 100)}`
-          if (!seen.has(key) || e.confidence > (seen.get(key)?.confidence ?? 0)) seen.set(key, e)
-        }
-        setEvents(Array.from(seen.values()))
+        setEvents(combined)
         setError(null)
       } catch (err) {
         setError('Failed to fetch events')
