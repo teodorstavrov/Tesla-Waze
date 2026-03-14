@@ -4,7 +4,7 @@
 
 export const config = { runtime: 'edge' }
 
-const REPORTS_KEY = 'tesla-waze:reports'
+const REPORTS_KEY = 'teslawaze_reports'
 const TTL_SECONDS = 7 * 24 * 3600  // 7 days — removed manually by nearby users
 
 // ─── Upstash Redis REST helpers ───────────────────────────────────────────────
@@ -18,12 +18,14 @@ async function redisGet(url, token, key) {
 }
 
 async function redisSet(url, token, key, value, exSeconds) {
-  await fetch(`${url}/set/${encodeURIComponent(key)}`, {
+  const res = await fetch(`${url}/set/${encodeURIComponent(key)}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify([value, 'EX', exSeconds]),
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(8000),
   })
+  const data = await res.json()
+  if (data.error) throw new Error(`Upstash SET error: ${data.error}`)
 }
 
 // ─── In-memory fallback (single instance, dev only) ───────────────────────────
@@ -46,13 +48,15 @@ async function saveReports(redisUrl, redisToken, reports) {
   if (redisUrl && redisToken) {
     try {
       await redisSet(redisUrl, redisToken, REPORTS_KEY, JSON.stringify(reports), TTL_SECONDS)
-      return
+      return { redis: true, error: null }
     } catch (err) {
       console.error('Redis SET error:', err.message)
+      return { redis: false, error: err.message }
     }
   }
   memStore.clear()
   reports.forEach(r => memStore.set(r.id, r))
+  return { redis: false, error: 'no_credentials' }
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -115,9 +119,12 @@ export default async function handler(req) {
     const all    = await loadReports(redisUrl, redisToken)
     const active = all.filter(r => new Date(r.expiresAt) > now)
     active.push(report)
-    await saveReports(redisUrl, redisToken, active)
+    const saveResult = await saveReports(redisUrl, redisToken, active)
 
-    return new Response(JSON.stringify({ report }), { status: 201, headers: corsHeaders })
+    return new Response(JSON.stringify({
+      report,
+      _debug: { ...saveResult, total_after: active.length }
+    }), { status: 201, headers: corsHeaders })
   }
 
   return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: corsHeaders })
