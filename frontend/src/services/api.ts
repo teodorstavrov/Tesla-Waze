@@ -68,6 +68,28 @@ export const submitReport = async (
   return data.report
 }
 
+export const fetchReports = async (bbox: BoundingBox): Promise<TrafficEvent[]> => {
+  const { data } = await client.get('/reports', {
+    params: { north: bbox.north, south: bbox.south, east: bbox.east, west: bbox.west }
+  })
+  const LABELS: Record<string, string> = {
+    police: 'Police (reported)', speed_camera: 'Speed camera (reported)',
+    accident: 'Accident (reported)', hazard: 'Hazard (reported)'
+  }
+  return (data.reports ?? []).map((r: UserReport & { lat: number; lng: number; expiresAt: string }) => ({
+    id: `report-${r.id}`,
+    type: r.type as TrafficEvent['type'],
+    position: { lat: r.lat, lng: r.lng },
+    title: LABELS[r.type] ?? r.type,
+    severity: 3 as const,
+    confidence: 70,
+    votes: r.upvotes ?? 1,
+    source: 'user_report' as const,
+    reportedAt: r.createdAt,
+    expiresAt: r.expiresAt,
+  }))
+}
+
 export const voteReport = async (id: string, vote: 'up' | 'down'): Promise<void> => {
   await client.post(`/reports/${id}/vote`, { vote })
 }

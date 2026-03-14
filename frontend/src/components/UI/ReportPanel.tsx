@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useEventsStore } from '../../store/eventsStore'
 import { useUIStore } from '../../store/uiStore'
 import { submitReport } from '../../services/api'
-import { UserReport } from '../../types'
+import { TrafficEvent, UserReport } from '../../types'
 
 const REPORT_TYPES: Array<{ type: UserReport['type']; icon: string; label: string; color: string }> = [
   { type: 'police',       icon: '🚔', label: 'Police',       color: 'border-red-500/50 bg-red-900/20 active:bg-red-900/40' },
@@ -14,8 +14,12 @@ const REPORT_TYPES: Array<{ type: UserReport['type']; icon: string; label: strin
 export const ReportPanel: React.FC = () => {
   const [submitted, setSubmitted] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const { userPosition } = useEventsStore()
+  const { userPosition, addEvent } = useEventsStore()
   const { addVoiceAlert } = useUIStore()
+
+  const LABELS: Record<string, string> = {
+    police: 'Police', speed_camera: 'Speed camera', accident: 'Accident', hazard: 'Hazard'
+  }
 
   const handleReport = async (type: UserReport['type'], label: string) => {
     if (!userPosition || loading) return
@@ -23,6 +27,22 @@ export const ReportPanel: React.FC = () => {
     setLoading(true)
     try {
       await submitReport(type, userPosition)
+
+      // Immediately show on map — don't wait for next poll
+      const localEvent: TrafficEvent = {
+        id: `report-local-${Date.now()}`,
+        type: type as TrafficEvent['type'],
+        position: userPosition,
+        title: LABELS[type] ?? label,
+        severity: 3,
+        confidence: 70,
+        votes: 1,
+        source: 'user_report',
+        reportedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+      }
+      addEvent(localEvent)
+
       setSubmitted(type)
       addVoiceAlert({ message: `${label} reported. Thank you!`, priority: 'low', triggeredAt: Date.now() })
       setTimeout(() => setSubmitted(null), 3000)

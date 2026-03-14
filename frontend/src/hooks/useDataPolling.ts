@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useEventsStore } from '../store/eventsStore'
 import { useUIStore } from '../store/uiStore'
-import { fetchEvents, fetchWazeAlerts, fetchEVStations, fetchRiskZones } from '../services/api'
+import { fetchEvents, fetchWazeAlerts, fetchReports, fetchEVStations, fetchRiskZones } from '../services/api'
 import { wsService } from '../services/websocket'
 import { BoundingBox, LatLng } from '../types'
 
@@ -44,13 +44,15 @@ export function useDataPolling() {
       try {
         setLoading(true)
         const bbox = getBBox(center.lat, center.lng)
-        const [alerts, cameras] = await Promise.allSettled([
+        const [alerts, cameras, reports] = await Promise.allSettled([
           fetchWazeAlerts(bbox),
           fetchEvents(bbox),
+          fetchReports(bbox),
         ])
         const combined = [
           ...(alerts.status === 'fulfilled' ? alerts.value : []),
           ...(cameras.status === 'fulfilled' ? cameras.value : []),
+          ...(reports.status === 'fulfilled' ? reports.value : []),
         ]
         setEvents(combined)
         setError(null)
