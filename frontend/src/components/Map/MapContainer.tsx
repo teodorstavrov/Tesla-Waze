@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react'
-import { MapContainer as LeafletMap, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer as LeafletMap, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { LatLngExpression } from 'leaflet'
 import { useEventsStore } from '../../store/eventsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -26,18 +26,21 @@ const TILE_ATTRIBUTIONS = {
   satellite: '&copy; Esri',
 }
 
-// Recenter button — flies map back to user position
-function RecenterButton() {
+// Custom zoom + recenter controls (replaces default ZoomControl hidden by TopBar)
+function MapControls() {
   const map          = useMap()
   const userPosition = useEventsStore(s => s.userPosition)
 
-  if (!userPosition) return null
-
-  const handleClick = () => {
-    map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), {
-      animate: true,
-      duration: 0.8,
-    })
+  const btnStyle: React.CSSProperties = {
+    width: 48, height: 48,
+    background: 'rgba(15,15,15,0.92)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: 12,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 22, cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+    transition: 'transform 0.1s',
+    color: '#fff',
   }
 
   return (
@@ -45,25 +48,41 @@ function RecenterButton() {
       className="leaflet-bottom leaflet-right"
       style={{ pointerEvents: 'auto', zIndex: 1000, marginBottom: '90px', marginRight: '8px' }}
     >
-      <div className="leaflet-control">
+      <div className="leaflet-control" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Zoom in */}
         <button
-          onClick={handleClick}
-          title="Recenter"
-          style={{
-            width: 48, height: 48,
-            background: 'rgba(15,15,15,0.92)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 12,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
-            transition: 'transform 0.1s',
-          }}
+          title="Zoom in"
+          style={btnStyle}
           onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
           onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+          onClick={() => map.zoomIn()}
         >
-          🎯
+          +
         </button>
+
+        {/* Zoom out */}
+        <button
+          title="Zoom out"
+          style={btnStyle}
+          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
+          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+          onClick={() => map.zoomOut()}
+        >
+          −
+        </button>
+
+        {/* Recenter */}
+        {userPosition && (
+          <button
+            title="Recenter"
+            style={btnStyle}
+            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
+            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+            onClick={() => map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), { animate: true, duration: 0.8 })}
+          >
+            🎯
+          </button>
+        )}
       </div>
     </div>
   )
@@ -144,13 +163,10 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
         keepBuffer={4}
       />
 
-      {/* Zoom control top-right (Tesla-friendly) */}
-      <ZoomControl position="topright" />
-
       {/* Auto-follow user + recenter */}
       <UserFollower />
       <BBoxEmitter />
-      <RecenterButton />
+      <MapControls />
 
       {/* User position */}
       <UserMarker />
