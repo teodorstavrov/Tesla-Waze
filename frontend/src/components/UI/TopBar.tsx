@@ -49,7 +49,7 @@ export const TopBar: React.FC = () => {
       <div className="pointer-events-auto ml-auto flex items-center gap-2">
         {nextPolice && (
           <div className="flex items-center gap-1 bg-red-900/80 border border-red-500/50 rounded-xl px-3 py-2 animate-pulse-slow">
-            <span className="text-base">🚔</span>
+            <span className="text-base">👮</span>
             <span className="text-red-300 text-sm font-semibold">
               {nextPolice.distance ? fmtDist(nextPolice.distance) : ''}
             </span>
