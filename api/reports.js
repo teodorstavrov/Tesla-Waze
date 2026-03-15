@@ -92,7 +92,7 @@ export default async function handler(req) {
       reports: active,
       total: active.length,
       _debug: { using_redis: !!(redisUrl && redisToken), all_count: all.length }
-    }), { headers: corsHeaders })
+    }), { headers: { ...corsHeaders, 'Cache-Control': 's-maxage=30' } })
   }
 
   // ── POST new report ────────────────────────────────────────────────────────

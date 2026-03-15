@@ -19,6 +19,7 @@ interface EventsState {
   nextCamera: TrafficEvent | null
 
   setEvents: (events: TrafficEvent[]) => void
+  setReports: (reports: TrafficEvent[]) => void
   addEvent: (event: TrafficEvent) => void
   removeEvent: (id: string) => void
   setEVStations: (stations: EVStation[]) => void
@@ -56,12 +57,20 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   nextCamera: null,
 
   setEvents: (events) => {
-    // Preserve existing user_report events not returned by this poll
-    // (guards against fetchReports network failure or Redis hiccup wiping local reports)
+    // Keep existing user_report events — they are managed by setReports, not this poll
     const existing = get().events
-    const newIds = new Set(events.map(e => e.id))
-    const keepReports = existing.filter(e => e.source === 'user_report' && !newIds.has(e.id))
+    const reports  = existing.filter(e => e.source === 'user_report')
+    const newIds   = new Set(events.map(e => e.id))
+    const keepReports = reports.filter(e => !newIds.has(e.id))
     set({ events: [...events, ...keepReports], lastUpdated: Date.now() })
+    get().computeNearby()
+  },
+
+  setReports: (reports) => {
+    // Replace only user_report events, leave live events untouched
+    set(s => ({
+      events: [...s.events.filter(e => e.source !== 'user_report'), ...reports]
+    }))
     get().computeNearby()
   },
 
