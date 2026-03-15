@@ -11,7 +11,7 @@ function fmtDist(m: number): string {
 export const TopBar: React.FC = () => {
   const { userSpeed, nextPolice, nextCamera } = useEventsStore()
   const { activeRoute, isNavigating } = useRouteStore()
-  const { voiceEnabled, setVoiceEnabled, language, setLanguage, mapStyle, setMapStyle } = useUIStore()
+  const { voiceEnabled, setVoiceEnabled, language, setLanguage } = useUIStore()
   const t = useT()
 
   const riskScore = activeRoute?.summary.riskScore ?? 0
@@ -109,14 +109,6 @@ export const TopBar: React.FC = () => {
           <span className="text-lg">{voiceEnabled ? '🔊' : '🔇'}</span>
         </button>
 
-        {/* Satellite toggle */}
-        <button
-          onClick={() => setMapStyle(mapStyle === 'satellite' ? 'light' : 'satellite')}
-          className={`backdrop-blur-sm border rounded-2xl p-2 w-11 h-11 flex items-center justify-center active:scale-95 transition-transform ${mapStyle === 'satellite' ? 'bg-blue-500/30 border-blue-400/60' : 'bg-tesla-panel/90 border-tesla-border'}`}
-          title="Toggle satellite"
-        >
-          <span className="text-lg">🛰️</span>
-        </button>
       </div>
     </div>
   )

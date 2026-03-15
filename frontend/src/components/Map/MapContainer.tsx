@@ -65,7 +65,7 @@ function ZoomControls() {
 function BottomLeftControls() {
   const map             = useMap()
   const userPosition    = useEventsStore(s => s.userPosition)
-  const { mapStyle, toggleDayNight } = useUIStore()
+  const { mapStyle, toggleDayNight, setMapStyle } = useUIStore()
   const t               = useT()
 
   return (
@@ -74,6 +74,21 @@ function BottomLeftControls() {
       style={{ pointerEvents: 'auto', zIndex: 1000, marginBottom: '90px', marginLeft: '8px' }}
     >
       <div className="leaflet-control" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Satellite toggle */}
+        <button
+          title="Toggle satellite"
+          style={{
+            ...btnStyle,
+            background: mapStyle === 'satellite' ? 'rgba(59,130,246,0.35)' : btnStyle.background,
+            border: mapStyle === 'satellite' ? '1px solid rgba(59,130,246,0.6)' : btnStyle.border,
+          }}
+          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
+          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+          onClick={() => setMapStyle(mapStyle === 'satellite' ? 'light' : 'satellite')}
+        >
+          🛰️
+        </button>
+
         {/* Day / Night toggle */}
         <button
           title={t(mapStyle === 'dark' ? 'toDayMode' : 'toNightMode')}
