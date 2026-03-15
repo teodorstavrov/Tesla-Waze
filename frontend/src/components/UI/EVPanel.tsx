@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import { useEventsStore } from '../../store/eventsStore'
 import { useT } from '../../i18n/useT'
 import { EVStation, PlugType } from '../../types'
@@ -12,7 +12,7 @@ const PLUG_COLORS: Record<PlugType, string> = {
   J1772:   'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
 }
 
-const POWER_STEPS = [0, 7, 22, 50, 150]
+const POWER_STEPS = [7, 22, 50, 150, 250]
 
 const StationCard: React.FC<{ station: EVStation }> = ({ station }) => {
   const t = useT()
@@ -56,14 +56,26 @@ const StationCard: React.FC<{ station: EVStation }> = ({ station }) => {
 export const EVPanel: React.FC = () => {
   const { evStations, userPosition } = useEventsStore()
   const t = useT()
-  const [minPower, setMinPower] = useState(0)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
 
-  const filtered = useMemo(() =>
-    evStations.filter(s =>
-      minPower === 0 || Math.max(...s.connectors.map(c => c.powerKw), 0) >= minPower
-    ),
-    [evStations, minPower]
-  )
+  const toggle = useCallback((kw: number) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(kw) ? next.delete(kw) : next.add(kw)
+      return next
+    })
+  }, [])
+
+  const filtered = useMemo(() => {
+    if (selected.size === 0) return evStations
+    return evStations.filter(s => {
+      const max = Math.max(...s.connectors.map(c => c.powerKw), 0)
+      // station qualifies if its max power falls in any selected bucket
+      const buckets = [...POWER_STEPS].sort((a, b) => b - a)
+      const bucket = buckets.find(b => max >= b) ?? 0
+      return selected.has(bucket)
+    })
+  }, [evStations, selected])
 
   const sorted = useMemo(() =>
     [...filtered].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity)),
@@ -81,20 +93,27 @@ export const EVPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Power filter */}
+      {/* Power filter — multi-select */}
       <div className="flex flex-col gap-1">
-        <div className="text-tesla-muted text-xs uppercase tracking-wide">{t('evMinPower')}</div>
+        <div className="flex items-center justify-between">
+          <div className="text-tesla-muted text-xs uppercase tracking-wide">{t('evMinPower')}</div>
+          {selected.size > 0 && (
+            <button onClick={() => setSelected(new Set())} className="text-xs text-tesla-muted underline">
+              {t('evAll')}
+            </button>
+          )}
+        </div>
         <div className="flex gap-2 flex-wrap">
           {POWER_STEPS.map(kw => (
             <button
               key={kw}
-              onClick={() => setMinPower(kw)}
+              onClick={() => toggle(kw)}
               className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all active:scale-95
-                ${minPower === kw
+                ${selected.has(kw)
                   ? 'bg-blue-500/30 border-blue-400/60 text-blue-300'
                   : 'bg-black/20 border-tesla-border text-tesla-muted'}`}
             >
-              {kw === 0 ? t('evAll') : `${kw}kW+`}
+              {kw}kW+
             </button>
           ))}
         </div>
