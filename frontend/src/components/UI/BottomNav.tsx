@@ -4,8 +4,11 @@ import { useRouteStore } from '../../store/routeStore'
 import { useT } from '../../i18n/useT'
 import { PanelId } from '../../types'
 
-// Bulgarian flag: white / green / red horizontal stripes at subtle opacity
-const BG_FLAG_GRADIENT = 'linear-gradient(to bottom, rgba(255,255,255,0.06) 33.3%, rgba(0,150,57,0.08) 33.3%, rgba(0,150,57,0.08) 66.6%, rgba(214,38,18,0.08) 66.6%)'
+// Bulgarian flag: white / green / red horizontal stripes
+const BG_FLAG_GRADIENT = 'linear-gradient(to bottom, rgba(255,255,255,0.28) 33.3%, rgba(0,150,57,0.32) 33.3%, rgba(0,150,57,0.32) 66.6%, rgba(214,38,18,0.32) 66.6%)'
+
+// Text shadow for readability on top of the flag
+const TEXT_SHADOW = '0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)'
 
 export const BottomNav: React.FC = () => {
   const { activePanel, togglePanel, language } = useUIStore()
@@ -31,13 +34,14 @@ export const BottomNav: React.FC = () => {
           <button
             key={item.id}
             onClick={() => togglePanel(item.id)}
-            className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-2xl transition-all active:scale-95
+            className={`relative flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-2xl transition-all active:scale-95
               ${activePanel === item.id
                 ? 'bg-tesla-accent/20 text-blue-400'
-                : 'text-tesla-muted hover:text-tesla-text'
+                : isBg ? 'text-white' : 'text-tesla-muted hover:text-tesla-text'
               }`}
+            style={isBg ? { textShadow: TEXT_SHADOW } : undefined}
           >
-            <span className="text-xl">{item.icon}</span>
+            <span className="text-xl" style={isBg ? { filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))' } : undefined}>{item.icon}</span>
             <span className="text-xs font-medium">{item.label}</span>
           </button>
         ))}
