@@ -4,7 +4,7 @@ import { useT } from '../../i18n/useT'
 import { EventType } from '../../types'
 
 export const SettingsPanel: React.FC = () => {
-  const { voiceEnabled, setVoiceEnabled, layers, toggleLayer } = useUIStore()
+  const { voiceEnabled, setVoiceEnabled, layers, toggleLayer, language, setLanguage } = useUIStore()
   const t = useT()
 
   const LAYER_LABELS: Record<string, string> = {
@@ -21,6 +21,15 @@ export const SettingsPanel: React.FC = () => {
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-white font-semibold text-lg">{t('settingsTitle')}</h2>
+
+      {/* Bulgaria Mode — always in English */}
+      <SettingRow
+        label="Bulgaria Mode 🇧🇬"
+        description="Аз съм българче"
+        icon="🌐"
+        value={language === 'bg'}
+        onChange={v => setLanguage(v ? 'bg' : 'en')}
+      />
 
       <SettingRow
         label={t('voiceAlerts')}
