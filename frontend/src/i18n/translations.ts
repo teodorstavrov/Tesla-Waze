@@ -74,6 +74,9 @@ const t = {
   voiceConstruct:   { en: 'Construction zone ahead',             bg: 'Строителна зона напред' },
   voiceClosure:     { en: 'Road closure ahead',                  bg: 'Затворен път напред' },
   voiceSpeedWarn:   { en: 'Warning: Speed limit is {speed} km/h', bg: 'Внимание: ограничение {speed} км/ч' },
+
+  // ── LoadingBar ─────────────────────────────────────────────────────────────
+  loadingSignals:   { en: 'Loading signals…', bg: 'Зареждане на сигнали…' },
 } as const
 
 export type TKey = keyof typeof t
