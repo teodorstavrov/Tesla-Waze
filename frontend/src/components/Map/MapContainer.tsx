@@ -109,7 +109,22 @@ function BottomLeftControls() {
             onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
             onClick={() => map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), { animate: true, duration: 0.8 })}
           >
-            🎯
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 100 100">
+              {/* Outer ring */}
+              <circle cx="50" cy="50" r="46" fill="none" stroke="#fff" strokeWidth="4" opacity="0.9"/>
+              {/* Inner ring */}
+              <circle cx="50" cy="50" r="32" fill="none" stroke="#fff" strokeWidth="2" opacity="0.7"/>
+              {/* North point */}
+              <polygon points="50,4 54,38 50,44 46,38" fill="#fff" opacity="0.95"/>
+              {/* South point */}
+              <polygon points="50,96 54,62 50,56 46,62" fill="#fff" opacity="0.95"/>
+              {/* East point */}
+              <polygon points="96,50 62,54 56,50 62,46" fill="#fff" opacity="0.95"/>
+              {/* West point */}
+              <polygon points="4,50 38,54 44,50 38,46" fill="#fff" opacity="0.95"/>
+              {/* Center dot */}
+              <circle cx="50" cy="50" r="5" fill="#fff" opacity="0.95"/>
+            </svg>
           </button>
         )}
       </div>
