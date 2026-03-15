@@ -5,7 +5,7 @@ import { useT } from '../../i18n/useT'
 import { PanelId } from '../../types'
 
 // Bulgarian flag: white / green / red horizontal stripes at subtle opacity
-const BG_FLAG_GRADIENT = 'linear-gradient(to bottom, rgba(255,255,255,0.10) 33.3%, rgba(0,150,57,0.13) 33.3%, rgba(0,150,57,0.13) 66.6%, rgba(214,38,18,0.13) 66.6%)'
+const BG_FLAG_GRADIENT = 'linear-gradient(to bottom, rgba(255,255,255,0.06) 33.3%, rgba(0,150,57,0.08) 33.3%, rgba(0,150,57,0.08) 66.6%, rgba(214,38,18,0.08) 66.6%)'
 
 export const BottomNav: React.FC = () => {
   const { activePanel, togglePanel, language } = useUIStore()
