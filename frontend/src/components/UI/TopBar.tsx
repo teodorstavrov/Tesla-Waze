@@ -4,6 +4,10 @@ import { useRouteStore } from '../../store/routeStore'
 import { useUIStore } from '../../store/uiStore'
 import { useT } from '../../i18n/useT'
 
+function fmtDist(m: number): string {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${Math.round(m)}m`
+}
+
 export const TopBar: React.FC = () => {
   const { userSpeed, nextPolice, nextCamera } = useEventsStore()
   const { activeRoute, isNavigating } = useRouteStore()
@@ -47,7 +51,7 @@ export const TopBar: React.FC = () => {
           <div className="flex items-center gap-1 bg-red-900/80 border border-red-500/50 rounded-xl px-3 py-2 animate-pulse-slow">
             <span className="text-base">🚔</span>
             <span className="text-red-300 text-sm font-semibold">
-              {nextPolice.distance ? `${Math.round(nextPolice.distance)}m` : ''}
+              {nextPolice.distance ? fmtDist(nextPolice.distance) : ''}
             </span>
           </div>
         )}
@@ -55,7 +59,7 @@ export const TopBar: React.FC = () => {
           <div className="flex items-center gap-1 bg-yellow-900/80 border border-yellow-500/50 rounded-xl px-3 py-2">
             <span className="text-base">📷</span>
             <span className="text-yellow-300 text-sm font-semibold">
-              {nextCamera.distance ? `${Math.round(nextCamera.distance)}m` : ''}
+              {nextCamera.distance ? fmtDist(nextCamera.distance) : ''}
               {nextCamera.speed ? ` · ${nextCamera.speed}` : ''}
             </span>
           </div>
