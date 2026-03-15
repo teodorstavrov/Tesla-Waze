@@ -4,7 +4,7 @@ import L from 'leaflet'
 import 'leaflet.markercluster'
 import { useEventsStore } from '../../store/eventsStore'
 import { EVStation } from '../../types'
-import { EVIcon } from './icons'
+import { EVIcon, TeslaIcon } from './icons'
 
 function formatEVPopup(station: EVStation): string {
   const connectors = station.connectors.map(c =>
@@ -46,7 +46,7 @@ export const EVMarkers: React.FC = () => {
     cluster.clearLayers()
 
     evStations.forEach(station => {
-      const icon = EVIcon(station.availablePorts, station.totalPorts)
+      const icon = station.isTesla ? TeslaIcon : EVIcon(station.availablePorts, station.totalPorts)
       const marker = L.marker([station.position.lat, station.position.lng], { icon })
       marker.bindPopup(formatEVPopup(station), { maxWidth: 240 })
       cluster.addLayer(marker)
