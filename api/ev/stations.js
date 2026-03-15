@@ -1,5 +1,5 @@
 // Vercel Edge Function — EV charging stations
-// Sources: OpenChargeMap (primary) + OpenStreetMap/Overpass (secondary)
+// Sources: OpenChargeMap (primary) + OpenStreetMap/Overpass (secondary) + Tesla Supercharger (tertiary)
 export const config = { runtime: 'edge', maxDuration: 25 }
 
 const HEADERS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -107,6 +107,55 @@ async function fetchOverpass(north, south, east, west) {
   return []
 }
 
+// ─── Tesla Supercharger ───────────────────────────────────────────────────────
+let teslaCache = null
+let teslaCacheAt = 0
+const TESLA_CACHE_TTL = 10 * 60 * 1000 // 10 min (data changes rarely)
+
+async function fetchTesla(north, south, east, west) {
+  // Reuse in-memory cache across requests within the same Edge instance
+  const now = Date.now()
+  if (!teslaCache || now - teslaCacheAt > TESLA_CACHE_TTL) {
+    const res = await fetch('https://supercharge.info/service/supercharge/allSites', {
+      signal: AbortSignal.timeout(12000),
+      headers: { 'Accept': 'application/json' },
+    })
+    if (!res.ok) throw new Error(`Tesla ${res.status}`)
+    teslaCache = await res.json()
+    teslaCacheAt = now
+  }
+
+  return teslaCache
+    .filter(s => {
+      if (s.status !== 'OPEN') return false
+      const { latitude: lat, longitude: lng } = s.gps ?? {}
+      if (!lat || !lng) return false
+      return lat >= south && lat <= north && lng >= west && lng <= east
+    })
+    .map(s => {
+      const { latitude: lat, longitude: lng } = s.gps
+      const plugs = s.plugs ?? {}
+      // Build connector list from plug counts
+      const conns = []
+      if ((plugs.nacs ?? 0) > 0) conns.push({ type: 'Tesla', powerKw: s.powerKilowatt ?? 0, available: true, total: plugs.nacs })
+      if ((plugs.tpc  ?? 0) > 0) conns.push({ type: 'Tesla', powerKw: s.powerKilowatt ?? 0, available: true, total: plugs.tpc })
+      if (conns.length === 0)    conns.push({ type: 'Tesla', powerKw: s.powerKilowatt ?? 0, available: true, total: 1 })
+
+      return {
+        id:             `tesla-${s.id}`,
+        name:           s.name,
+        position:       { lat, lng },
+        operator:       'Tesla',
+        connectors:     conns,
+        totalPorts:     s.stallCount ?? conns.reduce((a, c) => a + c.total, 0),
+        availablePorts: s.stallCount ?? conns.reduce((a, c) => a + c.total, 0),
+        isTesla:        true,
+        amenities:      [],
+        pricePerKwh:    undefined,
+      }
+    })
+}
+
 // ─── Deduplicate by position (~50m threshold) ─────────────────────────────────
 function dedup(stations) {
   const result = []
@@ -138,20 +187,22 @@ export default async function handler(req) {
   const lng    = (east + west) / 2
   const apiKey = process.env.OPENCHARGEMAP_API_KEY ?? ''
 
-  const [ocmResult, osmResult] = await Promise.allSettled([
+  const [ocmResult, osmResult, teslaResult] = await Promise.allSettled([
     fetchOCM(lat, lng, apiKey),
     fetchOverpass(north, south, east, west),
+    fetchTesla(north, south, east, west),
   ])
 
-  const ocm = ocmResult.status === 'fulfilled' ? ocmResult.value : []
-  const osm = osmResult.status === 'fulfilled' ? osmResult.value : []
+  const ocm   = ocmResult.status   === 'fulfilled' ? ocmResult.value   : []
+  const osm   = osmResult.status   === 'fulfilled' ? osmResult.value   : []
+  const tesla = teslaResult.status === 'fulfilled' ? teslaResult.value : []
 
-  // OCM first (has availability data), then fill with OSM
-  const stations = dedup([...ocm, ...osm])
+  // Tesla first (authoritative for Superchargers), then OCM (has availability), then OSM
+  const stations = dedup([...tesla, ...ocm, ...osm])
 
   return new Response(JSON.stringify({
     stations,
-    _sources: { ocm: ocm.length, osm: osm.length, total: stations.length }
+    _sources: { tesla: tesla.length, ocm: ocm.length, osm: osm.length, total: stations.length }
   }), {
     headers: { ...HEADERS, 'Cache-Control': 's-maxage=300' }
   })
