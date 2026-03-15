@@ -119,9 +119,39 @@ export function useVoiceAlerts() {
     }
 
     nearbyEvents.forEach(event => {
+      const dist = event.distance ?? Infinity
+
+      if (event.type === 'police') {
+        // ── First alert at 800m ──
+        if (dist <= 800 && !alerted.current.has(event.id)) {
+          alerted.current.add(event.id)
+          const message = getMessage(event)
+          if (message) {
+            playSiren()
+            flashScreen()
+            setTimeout(() => {
+              addVoiceAlert({ message, priority: 'high', triggeredAt: Date.now() })
+            }, 2000)
+          }
+        }
+        // ── Second alert at 300m ──
+        if (dist <= 300 && !alerted.current.has(`${event.id}-close`)) {
+          alerted.current.add(`${event.id}-close`)
+          const message = getMessage(event)
+          if (message) {
+            playSiren()
+            flashScreen()
+            setTimeout(() => {
+              addVoiceAlert({ message, priority: 'high', triggeredAt: Date.now() })
+            }, 2000)
+          }
+        }
+        return
+      }
+
       const threshold = ALERT_DISTANCES[event.type]
       if (!threshold) return
-      if ((event.distance ?? Infinity) > threshold) return
+      if (dist > threshold) return
       if (alerted.current.has(event.id)) return
 
       alerted.current.add(event.id)
@@ -129,20 +159,11 @@ export function useVoiceAlerts() {
       const message = getMessage(event)
       if (!message) return
 
-      if (event.type === 'police') {
-        // Siren + flash 2 seconds before voice
-        playSiren()
-        flashScreen()
-        setTimeout(() => {
-          addVoiceAlert({ message, priority: 'high', triggeredAt: Date.now() })
-        }, 2000)
-      } else {
-        addVoiceAlert({
-          message,
-          priority: event.type === 'speed_camera' ? 'high' : 'medium',
-          triggeredAt: Date.now(),
-        })
-      }
+      addVoiceAlert({
+        message,
+        priority: event.type === 'speed_camera' ? 'high' : 'medium',
+        triggeredAt: Date.now(),
+      })
     })
   }, [nearbyEvents, voiceEnabled, addVoiceAlert, language])
 
