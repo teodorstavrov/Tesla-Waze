@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useEventsStore } from '../../store/eventsStore'
 import { useT } from '../../i18n/useT'
 import { EVStation, PlugType } from '../../types'
@@ -11,6 +11,8 @@ const PLUG_COLORS: Record<PlugType, string> = {
   Type2:   'bg-green-500/20 text-green-400 border-green-500/30',
   J1772:   'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
 }
+
+const POWER_STEPS = [0, 7, 22, 50, 150]
 
 const StationCard: React.FC<{ station: EVStation }> = ({ station }) => {
   const t = useT()
@@ -54,30 +56,58 @@ const StationCard: React.FC<{ station: EVStation }> = ({ station }) => {
 export const EVPanel: React.FC = () => {
   const { evStations, userPosition } = useEventsStore()
   const t = useT()
+  const [minPower, setMinPower] = useState(0)
 
-  const sortedStations = useMemo(() =>
-    [...evStations].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity)),
-    [evStations]
+  const filtered = useMemo(() =>
+    evStations.filter(s =>
+      minPower === 0 || Math.max(...s.connectors.map(c => c.powerKw), 0) >= minPower
+    ),
+    [evStations, minPower]
   )
-  const availableCount = evStations.filter(s => s.availablePorts > 0).length
+
+  const sorted = useMemo(() =>
+    [...filtered].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity)),
+    [filtered]
+  )
+
+  const availableCount = filtered.filter(s => s.availablePorts > 0).length
 
   return (
     <div className="flex flex-col gap-3 min-h-0">
       <div className="flex items-center justify-between">
         <h2 className="text-white font-semibold text-lg">{t('evTitle')}</h2>
         <div className="text-sm text-tesla-muted">
-          <span className="text-green-400 font-semibold">{availableCount}</span>/{evStations.length} {t('evAvailable')}
+          <span className="text-green-400 font-semibold">{availableCount}</span>/{filtered.length} {t('evAvailable')}
+        </div>
+      </div>
+
+      {/* Power filter */}
+      <div className="flex flex-col gap-1">
+        <div className="text-tesla-muted text-xs uppercase tracking-wide">{t('evMinPower')}</div>
+        <div className="flex gap-2 flex-wrap">
+          {POWER_STEPS.map(kw => (
+            <button
+              key={kw}
+              onClick={() => setMinPower(kw)}
+              className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all active:scale-95
+                ${minPower === kw
+                  ? 'bg-blue-500/30 border-blue-400/60 text-blue-300'
+                  : 'bg-black/20 border-tesla-border text-tesla-muted'}`}
+            >
+              {kw === 0 ? t('evAll') : `${kw}kW+`}
+            </button>
+          ))}
         </div>
       </div>
 
       {!userPosition && <div className="text-tesla-muted text-sm text-center py-4">{t('evWaitingGPS')}</div>}
 
-      {evStations.length === 0 && userPosition && (
+      {filtered.length === 0 && userPosition && (
         <div className="text-tesla-muted text-sm text-center py-6">{t('evNoneNearby')}</div>
       )}
 
       <div className="flex flex-col gap-2 overflow-y-auto max-h-80 scrollbar-hide">
-        {sortedStations.map(station => <StationCard key={station.id} station={station} />)}
+        {sorted.map(station => <StationCard key={station.id} station={station} />)}
       </div>
     </div>
   )

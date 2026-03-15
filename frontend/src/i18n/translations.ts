@@ -60,6 +60,8 @@ const t = {
   evNoneNearby:     { en: 'No charging stations found nearby', bg: 'Няма зарядни наблизо' },
   evPorts:          { en: 'ports',                             bg: 'порта' },
   evAway:           { en: 'away',                              bg: 'разст.' },
+  evMinPower:       { en: 'Min power',                        bg: 'Мин. мощност' },
+  evAll:            { en: 'All',                              bg: 'Всички' },
 
   // ── Voice alert messages ───────────────────────────────────────────────────
   voicePolice:      { en: 'Police reported {dist} meters ahead', bg: 'Полиция {dist} метра напред' },
