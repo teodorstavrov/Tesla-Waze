@@ -134,7 +134,9 @@ async function fetchTesla(north, south, east, west) {
       const { latitude: lat, longitude: lng } = s.gps ?? {}
       if (!lat || !lng) return false
       const inViewport  = lat >= south  && lat <= north  && lng >= west  && lng <= east
+      // Exclude Turkish panhandle (Edirne ~41.68°N, 26.56°E) that overlaps Bulgaria's rectangular bbox
       const inBulgaria  = lat >= BG.south && lat <= BG.north && lng >= BG.west && lng <= BG.east
+                        && !(lat < 41.9 && lng > 26.3)
       return inViewport || inBulgaria
     })
     .map(s => {
