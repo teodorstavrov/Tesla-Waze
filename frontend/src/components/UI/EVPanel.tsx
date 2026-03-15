@@ -113,7 +113,7 @@ const StationCard: React.FC<{
 }
 
 export const EVPanel: React.FC = () => {
-  const { evStations, userPosition } = useEventsStore()
+  const { evStations, userPosition, setSelectedEVStation } = useEventsStore()
   const { setRoutes, clearRoute, activeRoute } = useRouteStore()
   const { setActivePanel } = useUIStore()
   const t = useT()
@@ -171,6 +171,7 @@ export const EVPanel: React.FC = () => {
       setActiveId(null)
       setRouteInfo(null)
       clearRoute()
+      setSelectedEVStation(null)
       return
     }
     if (!userPosition) return
@@ -182,7 +183,9 @@ export const EVPanel: React.FC = () => {
       const routes = await calculateRoutes(userPosition, station.position, ['fastest'])
       setRoutes(routes)
       if (routes[0]) {
-        setRouteInfo({ dist: routes[0].distanceMeters, dur: routes[0].durationSeconds })
+        const rd = routes[0].distanceMeters, ru = routes[0].durationSeconds
+        setRouteInfo({ dist: rd, dur: ru })
+        setSelectedEVStation({ ...station, _routeDist: rd, _routeDur: ru })
       }
     } catch {
       // silently fail

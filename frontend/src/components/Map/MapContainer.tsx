@@ -132,6 +132,18 @@ function BottomLeftControls() {
   )
 }
 
+// Recenter on demand (triggered by EVRouteInfoBar OK)
+function MapRecenterer() {
+  const map = useMap()
+  const { userPosition, recenterRequested, clearRecenterRequest } = useEventsStore()
+  useEffect(() => {
+    if (!recenterRequested || !userPosition) return
+    map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), { animate: true, duration: 0.8 })
+    clearRecenterRequest()
+  }, [map, recenterRequested, userPosition, clearRecenterRequest])
+  return null
+}
+
 // Follow user position
 function UserFollower() {
   const map = useMap()
@@ -212,6 +224,7 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
       <BBoxEmitter />
       <ZoomControls />
       <BottomLeftControls />
+      <MapRecenterer />
 
       {/* User position */}
       <UserMarker />

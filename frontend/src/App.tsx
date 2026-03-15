@@ -6,6 +6,7 @@ import { TopBar } from './components/UI/TopBar'
 import { BottomNav } from './components/UI/BottomNav'
 import { FloatingPanel } from './components/UI/FloatingPanel'
 import { NearbyReportPrompt } from './components/UI/NearbyReportPrompt'
+import { EVRouteInfoBar } from './components/UI/EVRouteInfoBar'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useVoiceAlerts } from './hooks/useVoiceAlerts'
@@ -80,6 +81,7 @@ const App: React.FC = () => {
       <FloatingPanel />
       <NearbyReportPrompt />
       <EVStatsCard />
+      <EVRouteInfoBar />
       <BottomNav />
       <Analytics />
     </div>

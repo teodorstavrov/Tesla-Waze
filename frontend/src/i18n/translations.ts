@@ -62,6 +62,9 @@ const t = {
   evAway:           { en: 'away',                              bg: 'разст.' },
   evMinPower:       { en: 'Min power',                        bg: 'Мин. мощност' },
   evAll:            { en: 'All',                              bg: 'Всички' },
+  evBrand:          { en: 'Brand',                           bg: 'Оператор' },
+  evPower:          { en: 'Power',                           bg: 'Мощност' },
+  evDist:           { en: 'Distance',                        bg: 'Разстояние' },
 
   // ── Voice alert messages ───────────────────────────────────────────────────
   voicePolice:      { en: 'Police reported {dist} meters ahead', bg: 'Полиция {dist} метра напред' },

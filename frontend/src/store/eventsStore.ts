@@ -29,6 +29,12 @@ interface EventsState {
   setLoading: (v: boolean) => void
   setError: (e: string | null) => void
   computeNearby: () => void
+
+  selectedEVStation: (EVStation & { _dist: number; _brand: string; _routeDist?: number; _routeDur?: number }) | null
+  setSelectedEVStation: (s: EventsState['selectedEVStation']) => void
+  recenterRequested: boolean
+  requestRecenter: () => void
+  clearRecenterRequest: () => void
 }
 
 function distanceMeters(a: LatLng, b: LatLng): number {
@@ -55,6 +61,8 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   nearbyEvents: [],
   nextPolice: null,
   nextCamera: null,
+  selectedEVStation: null,
+  recenterRequested: false,
 
   setEvents: (events) => {
     // Keep existing user_report events — they are managed by setReports, not this poll
@@ -97,6 +105,9 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
+  setSelectedEVStation: (selectedEVStation) => set({ selectedEVStation }),
+  requestRecenter: () => set({ recenterRequested: true }),
+  clearRecenterRequest: () => set({ recenterRequested: false }),
 
   computeNearby: () => {
     const { events, userPosition } = get()
