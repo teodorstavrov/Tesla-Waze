@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import { useEventsStore } from '../../store/eventsStore'
 import { useRouteStore } from '../../store/routeStore'
+import { useUIStore } from '../../store/uiStore'
 import { useT } from '../../i18n/useT'
 import { EVStation, PlugType } from '../../types'
 import { calculateRoutes } from '../../services/api'
@@ -115,6 +116,7 @@ const StationCard: React.FC<{
 export const EVPanel: React.FC = () => {
   const { evStations, userPosition } = useEventsStore()
   const { setRoutes, clearRoute, activeRoute } = useRouteStore()
+  const { setActivePanel } = useUIStore()
   const t = useT()
 
   const [powerFilter, setPowerFilter] = useState<Set<number> | null>(null)
@@ -176,6 +178,7 @@ export const EVPanel: React.FC = () => {
     setRoutingId(station.id)
     setActiveId(station.id)
     setRouteInfo(null)
+    setActivePanel(null)
     try {
       const routes = await calculateRoutes(userPosition, station.position, ['fastest'])
       setRoutes(routes)
