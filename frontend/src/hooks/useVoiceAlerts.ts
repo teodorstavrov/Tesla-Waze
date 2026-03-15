@@ -59,30 +59,19 @@ export function useVoiceAlerts() {
       const threshold = ALERT_DISTANCES[event.type]
       if (!threshold) return
       if ((event.distance ?? Infinity) > threshold) return
+      if (alerted.current.has(event.id)) return
 
-      const key = `${event.id}-${Math.floor((event.distance ?? 0) / 100)}`
-      if (alerted.current.has(key)) return
-      alerted.current.add(key)
+      alerted.current.add(event.id)
 
       const messageFn = ALERT_MESSAGES[event.type]
       if (!messageFn) return
 
-      const message = messageFn(event)
       addVoiceAlert({
-        message,
+        message: messageFn(event),
         priority: event.type === 'police' || event.type === 'speed_camera' ? 'high' : 'medium',
         triggeredAt: Date.now()
       })
     })
-
-    // Clear stale alerts (events no longer nearby)
-    const nearbyIds = new Set(nearbyEvents.map(e => e.id))
-    alerted.current = new Set(
-      [...alerted.current].filter(key => {
-        const id = key.split('-')[0]
-        return nearbyIds.has(id)
-      })
-    )
   }, [nearbyEvents, voiceEnabled, addVoiceAlert])
 
   // Speed warning (if over limit near camera)
