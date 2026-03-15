@@ -11,7 +11,13 @@ import { useWebSocket } from './hooks/useWebSocket'
 import { useVoiceAlerts } from './hooks/useVoiceAlerts'
 import { useDataPolling } from './hooks/useDataPolling'
 import { useEventsStore } from './store/eventsStore'
+import { useUIStore } from './store/uiStore'
 import { useT } from './i18n/useT'
+
+const BG = { north: 44.2, south: 41.2, east: 28.6, west: 22.4 }
+function inBulgaria(lat: number, lng: number) {
+  return lat >= BG.south && lat <= BG.north && lng >= BG.west && lng <= BG.east
+}
 
 // Connection status indicator
 const ConnectionBadge: React.FC = () => {
@@ -30,6 +36,19 @@ const ConnectionBadge: React.FC = () => {
 }
 
 const App: React.FC = () => {
+  const userPosition = useEventsStore(s => s.userPosition)
+  const { language, setLanguage } = useUIStore()
+  const langSet = React.useRef(false)
+
+  // Auto-set Bulgarian if user is in Bulgaria (runs once on first GPS fix)
+  useEffect(() => {
+    if (langSet.current || !userPosition) return
+    langSet.current = true
+    if (inBulgaria(userPosition.lat, userPosition.lng)) {
+      setLanguage('bg')
+    }
+  }, [userPosition, setLanguage])
+
   // Core hooks
   useGeolocation({ enableHighAccuracy: true })
   useWebSocket()
