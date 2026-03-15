@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import { useEventsStore } from '../../store/eventsStore'
+import { useRouteStore } from '../../store/routeStore'
 import { useT } from '../../i18n/useT'
 import { EVStation, PlugType } from '../../types'
+import { calculateRoutes } from '../../services/api'
 
 const PLUG_COLORS: Record<PlugType, string> = {
   Tesla:   'bg-red-500/20 text-red-400 border-red-500/30',
@@ -30,8 +32,7 @@ function haversine(a: { lat: number; lng: number }, b: { lat: number; lng: numbe
 }
 
 function getTier(max: number) {
-  const tiers = [...POWER_TIERS].sort((a, b) => b.min - a.min)
-  return tiers.find(t => max >= t.min)?.min ?? 0
+  return [...POWER_TIERS].sort((a, b) => b.min - a.min).find(t => max >= t.min)?.min ?? 0
 }
 
 function normalizeOperator(op: string): string {
@@ -42,13 +43,14 @@ function normalizeOperator(op: string): string {
   if (o.includes('spark'))   return 'Spark'
   if (o.includes('echarge') || o.includes('e-charge')) return 'eCharge'
   if (o.includes('unknown') || o === '') return 'Other'
-  // Capitalize first word
   return op.split(/[\s/,]+/)[0].slice(0, 12)
 }
 
-const FilterBtn: React.FC<{
-  active: boolean; onClick: () => void; children: React.ReactNode
-}> = ({ active, onClick, children }) => (
+function fmtDist(m: number) {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${Math.round(m)}m`
+}
+
+const FilterBtn: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
   <button
     onClick={onClick}
     className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all active:scale-95
@@ -58,14 +60,27 @@ const FilterBtn: React.FC<{
   </button>
 )
 
-const StationCard: React.FC<{ station: EVStation & { _dist: number } }> = ({ station }) => {
+type StationWithDist = EVStation & { _dist: number; _brand: string }
+
+const StationCard: React.FC<{
+  station: StationWithDist
+  onRoute: (s: StationWithDist) => void
+  isRouting: boolean
+  isActive: boolean
+}> = ({ station, onRoute, isRouting, isActive }) => {
   const t = useT()
   const availability = station.totalPorts > 0 ? station.availablePorts / station.totalPorts : 0
   const availColor   = availability > 0.5 ? 'text-green-400' : availability > 0.2 ? 'text-yellow-400' : 'text-red-400'
   const maxPower     = Math.max(...station.connectors.map(c => c.powerKw), 0)
 
   return (
-    <div className="bg-black/20 border border-tesla-border rounded-2xl p-4">
+    <button
+      onClick={() => onRoute(station)}
+      className={`w-full text-left rounded-2xl p-4 border transition-all active:scale-[0.98]
+        ${isActive
+          ? 'bg-blue-500/15 border-blue-400/50'
+          : 'bg-black/20 border-tesla-border hover:border-white/20'}`}
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -74,7 +89,7 @@ const StationCard: React.FC<{ station: EVStation & { _dist: number } }> = ({ sta
           </div>
           <div className="text-tesla-muted text-xs">{station.operator}</div>
         </div>
-        <div className="text-right ml-2">
+        <div className="text-right ml-2 flex-shrink-0">
           <div className={`font-bold text-lg ${availColor}`}>{station.availablePorts}/{station.totalPorts}</div>
           <div className="text-tesla-muted text-xs">{t('evPorts')}</div>
         </div>
@@ -90,26 +105,23 @@ const StationCard: React.FC<{ station: EVStation & { _dist: number } }> = ({ sta
 
       <div className="flex items-center gap-3 text-xs text-tesla-muted">
         {maxPower > 0 && <span className="flex items-center gap-1"><span className="text-yellow-400">⚡</span>{maxPower}kW max</span>}
-        {station.pricePerKwh != null && <span>${station.pricePerKwh.toFixed(2)}/kWh</span>}
-        {station._dist < Infinity && (
-          <span className="ml-auto">
-            {station._dist >= 1000 ? `${(station._dist / 1000).toFixed(1)}km` : `${Math.round(station._dist)}m`} {t('evAway')}
-          </span>
-        )}
+        {station._dist < Infinity && <span className="ml-auto font-semibold text-white/70">{fmtDist(station._dist)}</span>}
+        {isRouting && isActive && <span className="text-blue-400 animate-pulse">Routing…</span>}
       </div>
-    </div>
+    </button>
   )
 }
 
 export const EVPanel: React.FC = () => {
   const { evStations, userPosition } = useEventsStore()
+  const { setRoutes, clearRoute, activeRoute } = useRouteStore()
   const t = useT()
 
-  // Power filter — null = ALL
   const [powerFilter, setPowerFilter] = useState<Set<number> | null>(null)
-
-  // Brand filter — null = ALL
   const [brandFilter, setBrandFilter] = useState<Set<string> | null>(null)
+  const [routingId, setRoutingId]     = useState<string | null>(null)
+  const [activeId, setActiveId]       = useState<string | null>(null)
+  const [routeInfo, setRouteInfo]     = useState<{ dist: number; dur: number } | null>(null)
 
   const togglePower = useCallback((min: number) => {
     setPowerFilter(prev => {
@@ -127,23 +139,18 @@ export const EVPanel: React.FC = () => {
     })
   }, [])
 
-  // Attach live distance + normalised brand, then sort closest first
   const withDist = useMemo(() =>
     evStations
       .map(s => ({
         ...s,
-        _dist: userPosition ? haversine(userPosition, s.position) : Infinity,
+        _dist:  userPosition ? haversine(userPosition, s.position) : Infinity,
         _brand: normalizeOperator(s.operator ?? ''),
       }))
       .sort((a, b) => a._dist - b._dist),
     [evStations, userPosition]
   )
 
-  // Unique brands (sorted alphabetically, max 8)
-  const brands = useMemo(() => {
-    const set = new Set(withDist.map(s => s._brand))
-    return [...set].sort()
-  }, [withDist])
+  const brands = useMemo(() => [...new Set(withDist.map(s => s._brand))].sort(), [withDist])
 
   const filtered = useMemo(() =>
     withDist.filter(s => {
@@ -157,6 +164,31 @@ export const EVPanel: React.FC = () => {
     [withDist, powerFilter, brandFilter]
   )
 
+  const handleRoute = useCallback(async (station: StationWithDist) => {
+    // Toggle off if already active
+    if (activeId === station.id) {
+      setActiveId(null)
+      setRouteInfo(null)
+      clearRoute()
+      return
+    }
+    if (!userPosition) return
+    setRoutingId(station.id)
+    setActiveId(station.id)
+    setRouteInfo(null)
+    try {
+      const routes = await calculateRoutes(userPosition, station.position, ['fastest'])
+      setRoutes(routes)
+      if (routes[0]) {
+        setRouteInfo({ dist: routes[0].distanceMeters, dur: routes[0].durationSeconds })
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setRoutingId(null)
+    }
+  }, [userPosition, activeId, setRoutes, clearRoute])
+
   const availableCount = filtered.filter(s => s.availablePorts > 0).length
 
   return (
@@ -168,17 +200,28 @@ export const EVPanel: React.FC = () => {
         </div>
       </div>
 
+      {/* Active route info banner */}
+      {routeInfo && activeId && (
+        <div className="flex items-center justify-between bg-blue-500/15 border border-blue-400/40 rounded-2xl px-4 py-2">
+          <span className="text-blue-300 text-sm font-semibold">
+            🗺 {fmtDist(routeInfo.dist)} · {Math.round(routeInfo.dur / 60)} min
+          </span>
+          <button
+            onClick={() => { setActiveId(null); setRouteInfo(null); clearRoute() }}
+            className="text-tesla-muted text-xs underline"
+          >
+            ✕ clear
+          </button>
+        </div>
+      )}
+
       {/* Power filter */}
       <div className="flex flex-col gap-1">
         <div className="text-tesla-muted text-xs uppercase tracking-wide">{t('evMinPower')}</div>
         <div className="flex gap-2 flex-wrap">
-          <FilterBtn active={powerFilter === null} onClick={() => setPowerFilter(null)}>
-            {t('evAll')}
-          </FilterBtn>
+          <FilterBtn active={powerFilter === null} onClick={() => setPowerFilter(null)}>{t('evAll')}</FilterBtn>
           {POWER_TIERS.map(({ min, label }) => (
-            <FilterBtn key={min} active={powerFilter?.has(min) ?? false} onClick={() => togglePower(min)}>
-              {label}
-            </FilterBtn>
+            <FilterBtn key={min} active={powerFilter?.has(min) ?? false} onClick={() => togglePower(min)}>{label}</FilterBtn>
           ))}
         </div>
       </div>
@@ -188,13 +231,9 @@ export const EVPanel: React.FC = () => {
         <div className="flex flex-col gap-1">
           <div className="text-tesla-muted text-xs uppercase tracking-wide">Brand</div>
           <div className="flex gap-2 flex-wrap">
-            <FilterBtn active={brandFilter === null} onClick={() => setBrandFilter(null)}>
-              {t('evAll')}
-            </FilterBtn>
+            <FilterBtn active={brandFilter === null} onClick={() => setBrandFilter(null)}>{t('evAll')}</FilterBtn>
             {brands.map(brand => (
-              <FilterBtn key={brand} active={brandFilter?.has(brand) ?? false} onClick={() => toggleBrand(brand)}>
-                {brand}
-              </FilterBtn>
+              <FilterBtn key={brand} active={brandFilter?.has(brand) ?? false} onClick={() => toggleBrand(brand)}>{brand}</FilterBtn>
             ))}
           </div>
         </div>
@@ -206,7 +245,15 @@ export const EVPanel: React.FC = () => {
       )}
 
       <div className="flex flex-col gap-2 overflow-y-auto max-h-80 scrollbar-hide">
-        {filtered.map(station => <StationCard key={station.id} station={station} />)}
+        {filtered.map(station => (
+          <StationCard
+            key={station.id}
+            station={station}
+            onRoute={handleRoute}
+            isRouting={routingId === station.id}
+            isActive={activeId === station.id}
+          />
+        ))}
       </div>
     </div>
   )
