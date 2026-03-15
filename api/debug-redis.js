@@ -16,11 +16,11 @@ export default async function handler(req) {
   const result  = { set: null, get: null, match: false, error: null }
 
   try {
-    // SET
-    const setRes  = await fetch(`${url}/set/${testKey}/EX/60`, {
+    // SET via pipeline
+    const setRes  = await fetch(`${url}/pipeline`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: testVal,
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([['SET', testKey, testVal, 'EX', 60]]),
       signal: AbortSignal.timeout(8000),
     })
     const setData = await setRes.json()

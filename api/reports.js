@@ -18,15 +18,15 @@ async function redisGet(url, token, key) {
 }
 
 async function redisSet(url, token, key, value, exSeconds) {
-  // Upstash REST: EX goes in the URL path, value is the raw body string
-  const res = await fetch(`${url}/set/${encodeURIComponent(key)}/EX/${exSeconds}`, {
+  // Upstash pipeline format — value goes in body (safe for large JSON payloads)
+  const res = await fetch(`${url}/pipeline`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: value,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify([['SET', key, value, 'EX', exSeconds]]),
     signal: AbortSignal.timeout(8000),
   })
-  const data = await res.json()
-  if (data.error) throw new Error(`Upstash SET error: ${data.error}`)
+  const [result] = await res.json()
+  if (result?.error) throw new Error(`Upstash SET error: ${result.error}`)
 }
 
 // ─── In-memory fallback (single instance, dev only) ───────────────────────────
