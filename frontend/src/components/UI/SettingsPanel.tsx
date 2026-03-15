@@ -1,10 +1,23 @@
 import React from 'react'
 import { useUIStore } from '../../store/uiStore'
 import { useT } from '../../i18n/useT'
+import { EventType } from '../../types'
 
 export const SettingsPanel: React.FC = () => {
-  const { voiceEnabled, setVoiceEnabled, isDrivingMode, setDrivingMode } = useUIStore()
+  const { voiceEnabled, setVoiceEnabled, isDrivingMode, setDrivingMode, layers, toggleLayer } = useUIStore()
   const t = useT()
+
+  const LAYER_LABELS: Record<string, string> = {
+    police:       t('layerPolice'),
+    speed_camera: t('layerCamera'),
+    accident:     t('layerAccident'),
+    traffic:      t('layerTraffic'),
+    hazard:       t('layerHazard'),
+    construction: t('layerConstruction'),
+    ev_station:   t('layerEV'),
+    risk_zones:   t('layerRisk'),
+    road_closure: t('layerRoadClosure'),
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -25,6 +38,26 @@ export const SettingsPanel: React.FC = () => {
         value={isDrivingMode}
         onChange={setDrivingMode}
       />
+
+      {/* Event Layers */}
+      <div className="pt-2 border-t border-tesla-border flex flex-col gap-2">
+        <div className="text-tesla-muted text-xs uppercase tracking-wide">{t('eventLayers')}</div>
+        {layers.map(layer => (
+          <button
+            key={layer.id}
+            onClick={() => toggleLayer(layer.id as EventType | 'risk_zones')}
+            className="flex items-center justify-between py-3 px-3 rounded-2xl border border-tesla-border active:scale-[0.98] transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{layer.icon}</span>
+              <span className="text-tesla-text font-medium">{LAYER_LABELS[layer.id] ?? layer.label}</span>
+            </div>
+            <div className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${layer.enabled ? 'bg-blue-500' : 'bg-tesla-border'}`}>
+              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${layer.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </div>
+          </button>
+        ))}
+      </div>
 
       <div className="pt-2 border-t border-tesla-border">
         <div className="text-tesla-muted text-xs text-center">
