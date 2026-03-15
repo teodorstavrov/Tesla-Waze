@@ -16,7 +16,6 @@ const PLUG_COLORS: Record<PlugType, string> = {
 }
 
 const POWER_TIERS: { min: number; label: string }[] = [
-  { min: 0,   label: '<7kW'    },
   { min: 7,   label: '7-21kW'  },
   { min: 22,  label: '22-49kW' },
   { min: 50,  label: '50-149kW'},
