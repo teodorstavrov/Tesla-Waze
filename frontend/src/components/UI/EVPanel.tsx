@@ -12,7 +12,13 @@ const PLUG_COLORS: Record<PlugType, string> = {
   J1772:   'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
 }
 
-const POWER_STEPS = [7, 22, 50, 150, 250]
+const POWER_TIERS: { min: number; label: string }[] = [
+  { min: 0,   label: '<7kW'   },
+  { min: 7,   label: '7-21kW' },
+  { min: 22,  label: '22-49kW'},
+  { min: 50,  label: '50-149kW'},
+  { min: 150, label: '150kW+' },
+]
 
 const StationCard: React.FC<{ station: EVStation }> = ({ station }) => {
   const t = useT()
@@ -66,21 +72,21 @@ export const EVPanel: React.FC = () => {
     })
   }, [])
 
+  const getTier = (max: number) => {
+    const tiers = [...POWER_TIERS].sort((a, b) => b.min - a.min)
+    return tiers.find(t => max >= t.min)?.min ?? 0
+  }
+
   const filtered = useMemo(() => {
-    if (selected.size === 0) return evStations
-    return evStations.filter(s => {
-      const max = Math.max(...s.connectors.map(c => c.powerKw), 0)
-      // station qualifies if its max power falls in any selected bucket
-      const buckets = [...POWER_STEPS].sort((a, b) => b - a)
-      const bucket = buckets.find(b => max >= b) ?? 0
-      return selected.has(bucket)
-    })
+    if (selected.size === 0) return [...evStations].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
+    return evStations
+      .filter(s => {
+        const max = Math.max(...s.connectors.map(c => c.powerKw), 0)
+        return selected.has(getTier(max))
+      })
+      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
   }, [evStations, selected])
 
-  const sorted = useMemo(() =>
-    [...filtered].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity)),
-    [filtered]
-  )
 
   const availableCount = filtered.filter(s => s.availablePorts > 0).length
 
@@ -104,16 +110,16 @@ export const EVPanel: React.FC = () => {
           )}
         </div>
         <div className="flex gap-2 flex-wrap">
-          {POWER_STEPS.map(kw => (
+          {POWER_TIERS.map(({ min, label }) => (
             <button
-              key={kw}
-              onClick={() => toggle(kw)}
+              key={min}
+              onClick={() => toggle(min)}
               className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all active:scale-95
-                ${selected.has(kw)
+                ${selected.has(min)
                   ? 'bg-blue-500/30 border-blue-400/60 text-blue-300'
                   : 'bg-black/20 border-tesla-border text-tesla-muted'}`}
             >
-              {kw}kW+
+              {label}
             </button>
           ))}
         </div>
@@ -126,7 +132,7 @@ export const EVPanel: React.FC = () => {
       )}
 
       <div className="flex flex-col gap-2 overflow-y-auto max-h-80 scrollbar-hide">
-        {sorted.map(station => <StationCard key={station.id} station={station} />)}
+        {filtered.map(station => <StationCard key={station.id} station={station} />)}
       </div>
     </div>
   )
