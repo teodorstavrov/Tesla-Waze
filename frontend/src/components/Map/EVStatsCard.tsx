@@ -44,12 +44,12 @@ export const EVStatsCard: React.FC = () => {
     <div
       style={{
         position: 'absolute',
-        top: 72,
+        top: 12,
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1000,
         width: 170,
-        background: 'rgba(15,15,15,0.92)',
+        background: 'rgba(15,15,15,0.70)',
         border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: 14,
         boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
