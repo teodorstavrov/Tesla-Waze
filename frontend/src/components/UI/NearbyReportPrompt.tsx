@@ -4,7 +4,7 @@ import { deleteReport } from '../../services/api'
 import { useT } from '../../i18n/useT'
 import { TrafficEvent } from '../../types'
 
-const PROXIMITY_METERS = 200
+const PROXIMITY_METERS = 5
 const DISMISS_SECONDS  = 10
 
 function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
