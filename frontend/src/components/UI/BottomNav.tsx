@@ -4,10 +4,14 @@ import { useRouteStore } from '../../store/routeStore'
 import { useT } from '../../i18n/useT'
 import { PanelId } from '../../types'
 
+// Bulgarian flag: white / green / red horizontal stripes at subtle opacity
+const BG_FLAG_GRADIENT = 'linear-gradient(to bottom, rgba(255,255,255,0.10) 33.3%, rgba(0,150,57,0.13) 33.3%, rgba(0,150,57,0.13) 66.6%, rgba(214,38,18,0.13) 66.6%)'
+
 export const BottomNav: React.FC = () => {
-  const { activePanel, togglePanel } = useUIStore()
+  const { activePanel, togglePanel, language } = useUIStore()
   const { isNavigating, clearRoute } = useRouteStore()
   const t = useT()
+  const isBg = language === 'bg'
 
   const NAV_ITEMS: { id: PanelId; icon: string; label: string }[] = [
     { id: 'ev',       icon: '⚡', label: t('navCharging') },
@@ -17,7 +21,12 @@ export const BottomNav: React.FC = () => {
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-[1000] flex items-center justify-around px-2 pb-safe pointer-events-none">
-      <div className="pointer-events-auto w-full max-w-lg mx-auto flex items-center gap-1 bg-tesla-panel/95 backdrop-blur-md border border-tesla-border rounded-t-3xl px-3 pt-3 pb-4 shadow-panel">
+      <div className="relative pointer-events-auto w-full max-w-lg mx-auto flex items-center gap-1 bg-tesla-panel/95 backdrop-blur-md border border-tesla-border rounded-t-3xl px-3 pt-3 pb-4 shadow-panel">
+        {/* Bulgarian flag overlay — opacity-only transition for GPU compositing */}
+        <div
+          className="absolute inset-0 rounded-t-3xl pointer-events-none transition-opacity duration-500"
+          style={{ background: BG_FLAG_GRADIENT, opacity: isBg ? 1 : 0 }}
+        />
         {NAV_ITEMS.map(item => (
           <button
             key={item.id}
