@@ -26,63 +26,60 @@ const TILE_ATTRIBUTIONS = {
   satellite: '&copy; Esri',
 }
 
-// Custom zoom + recenter controls (replaces default ZoomControl hidden by TopBar)
-function MapControls() {
-  const map          = useMap()
-  const userPosition = useEventsStore(s => s.userPosition)
+const btnStyle: React.CSSProperties = {
+  width: 48, height: 48,
+  background: 'rgba(15,15,15,0.92)',
+  border: '1px solid rgba(255,255,255,0.15)',
+  borderRadius: 12,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontSize: 22, cursor: 'pointer',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+  transition: 'transform 0.1s',
+  color: '#fff',
+}
 
-  const btnStyle: React.CSSProperties = {
-    width: 48, height: 48,
-    background: 'rgba(15,15,15,0.92)',
-    border: '1px solid rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 22, cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
-    transition: 'transform 0.1s',
-    color: '#fff',
-  }
-
+// Zoom controls — bottom-right
+function ZoomControls() {
+  const map = useMap()
   return (
     <div
       className="leaflet-bottom leaflet-right"
       style={{ pointerEvents: 'auto', zIndex: 1000, marginBottom: '90px', marginRight: '8px' }}
     >
       <div className="leaflet-control" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {/* Zoom in */}
+        <button title="Zoom in" style={btnStyle}
+          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
+          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+          onClick={() => map.zoomIn()}>+</button>
+        <button title="Zoom out" style={btnStyle}
+          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
+          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+          onClick={() => map.zoomOut()}>−</button>
+      </div>
+    </div>
+  )
+}
+
+// Recenter button — bottom-left
+function RecenterButton() {
+  const map          = useMap()
+  const userPosition = useEventsStore(s => s.userPosition)
+  if (!userPosition) return null
+  return (
+    <div
+      className="leaflet-bottom leaflet-left"
+      style={{ pointerEvents: 'auto', zIndex: 1000, marginBottom: '90px', marginLeft: '8px' }}
+    >
+      <div className="leaflet-control">
         <button
-          title="Zoom in"
+          title="Recenter"
           style={btnStyle}
           onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
           onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-          onClick={() => map.zoomIn()}
+          onClick={() => map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), { animate: true, duration: 0.8 })}
         >
-          +
+          🎯
         </button>
-
-        {/* Zoom out */}
-        <button
-          title="Zoom out"
-          style={btnStyle}
-          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
-          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-          onClick={() => map.zoomOut()}
-        >
-          −
-        </button>
-
-        {/* Recenter */}
-        {userPosition && (
-          <button
-            title="Recenter"
-            style={btnStyle}
-            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
-            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-            onClick={() => map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), { animate: true, duration: 0.8 })}
-          >
-            🎯
-          </button>
-        )}
       </div>
     </div>
   )
@@ -163,10 +160,11 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
         keepBuffer={4}
       />
 
-      {/* Auto-follow user + recenter */}
+      {/* Auto-follow user */}
       <UserFollower />
       <BBoxEmitter />
-      <MapControls />
+      <ZoomControls />
+      <RecenterButton />
 
       {/* User position */}
       <UserMarker />
