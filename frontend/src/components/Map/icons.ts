@@ -35,20 +35,29 @@ export const EventIcons: Record<string, L.DivIcon> = {
 
 export const UserArrowIcon = (heading: number) => L.divIcon({
   html: `
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-      <g transform="rotate(${heading}, 24, 24)">
+    <style>
+      @keyframes user-pulse {
+        0%   { r: 22; opacity: 0.5; }
+        100% { r: 38; opacity: 0;   }
+      }
+      .user-pulse { animation: user-pulse 1.6s ease-out infinite; }
+    </style>
+    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+      <!-- Pulsing ring -->
+      <circle class="user-pulse" cx="40" cy="40" r="22" fill="none" stroke="#3B82F6" stroke-width="2"/>
+      <g transform="rotate(${heading}, 40, 40)">
         <!-- Accuracy halo -->
-        <circle cx="24" cy="24" r="22" fill="#3B82F6" opacity="0.12"/>
+        <circle cx="40" cy="40" r="22" fill="#3B82F6" opacity="0.12"/>
         <!-- Navigation arrow pointing up (north = 0°) -->
-        <polygon points="24,4 36,38 24,30 12,38"
+        <polygon points="40,18 52,54 40,46 28,54"
           fill="#3B82F6" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Center dot -->
-        <circle cx="24" cy="24" r="3" fill="#fff" opacity="0.9"/>
+        <circle cx="40" cy="40" r="3.5" fill="#fff" opacity="0.95"/>
       </g>
     </svg>`,
   className: '',
-  iconSize: [48, 48],
-  iconAnchor: [24, 24],
+  iconSize: [80, 80],
+  iconAnchor: [40, 40],
 })
 
 export const EVIcon = (available: number, total: number) => {
