@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useEventsStore } from '../store/eventsStore'
 import { useUIStore } from '../store/uiStore'
 import { TrafficEvent } from '../types'
+import { getT } from '../i18n/translations'
 
 const ALERT_DISTANCES: Record<string, number> = {
   police: 800,
@@ -10,15 +11,6 @@ const ALERT_DISTANCES: Record<string, number> = {
   hazard: 300,
   construction: 300,
   road_closure: 200,
-}
-
-const ALERT_MESSAGES: Record<string, (e: TrafficEvent) => string> = {
-  police:       (e) => `Police reported ${e.distance ? Math.round(e.distance) + ' meters' : ''} ahead`,
-  speed_camera: (e) => `Speed camera ${e.speed ? 'limit ' + e.speed + ' km/h ' : ''}ahead in ${e.distance ? Math.round(e.distance) + ' meters' : ''}`,
-  accident:     () => 'Accident ahead — reduce speed',
-  hazard:       () => 'Road hazard ahead — drive carefully',
-  construction: () => 'Construction zone ahead',
-  road_closure: () => 'Road closure ahead',
 }
 
 // ─── Police pre-alert: siren + screen flash ───────────────────────────────────
@@ -84,7 +76,7 @@ export function useVoiceAlerts() {
   const alerted  = useRef<Set<string>>(new Set())
   const synthRef = useRef<SpeechSynthesis | null>(null)
   const { nearbyEvents, userSpeed } = useEventsStore()
-  const { voiceEnabled, addVoiceAlert, pendingAlerts, markAlertSpoken } = useUIStore()
+  const { voiceEnabled, addVoiceAlert, pendingAlerts, markAlertSpoken, language } = useUIStore()
 
   // Init speech synthesis
   useEffect(() => {
@@ -102,7 +94,7 @@ export function useVoiceAlerts() {
       utt.rate   = 1.1
       utt.pitch  = 1.0
       utt.volume = 1.0
-      utt.lang   = 'en-US'
+      utt.lang   = language === 'bg' ? 'bg-BG' : 'en-US'
       utt.onend  = () => markAlertSpoken(alert.id)
       synthRef.current!.speak(utt)
     })
@@ -111,6 +103,20 @@ export function useVoiceAlerts() {
   // Detect approaching events
   useEffect(() => {
     if (!voiceEnabled) return
+    const t = getT(language)
+
+    const getMessage = (event: TrafficEvent): string => {
+      const dist = event.distance ? String(Math.round(event.distance)) : ''
+      switch (event.type) {
+        case 'police':       return t('voicePolice', { dist })
+        case 'speed_camera': return t('voiceCamera', { dist })
+        case 'accident':     return t('voiceAccident')
+        case 'hazard':       return t('voiceHazard')
+        case 'construction': return t('voiceConstruct')
+        case 'road_closure': return t('voiceClosure')
+        default:             return ''
+      }
+    }
 
     nearbyEvents.forEach(event => {
       const threshold = ALERT_DISTANCES[event.type]
@@ -120,29 +126,25 @@ export function useVoiceAlerts() {
 
       alerted.current.add(event.id)
 
-      const messageFn = ALERT_MESSAGES[event.type]
-      if (!messageFn) return
+      const message = getMessage(event)
+      if (!message) return
 
       if (event.type === 'police') {
         // Siren + flash 2 seconds before voice
         playSiren()
         flashScreen()
         setTimeout(() => {
-          addVoiceAlert({
-            message: messageFn(event),
-            priority: 'high',
-            triggeredAt: Date.now(),
-          })
+          addVoiceAlert({ message, priority: 'high', triggeredAt: Date.now() })
         }, 2000)
       } else {
         addVoiceAlert({
-          message: messageFn(event),
+          message,
           priority: event.type === 'speed_camera' ? 'high' : 'medium',
           triggeredAt: Date.now(),
         })
       }
     })
-  }, [nearbyEvents, voiceEnabled, addVoiceAlert])
+  }, [nearbyEvents, voiceEnabled, addVoiceAlert, language])
 
   // Speed warning (if over limit near camera)
   useEffect(() => {
@@ -150,11 +152,12 @@ export function useVoiceAlerts() {
     const camera = events.find(e => e.type === 'speed_camera' && (e.distance ?? Infinity) < 300)
     if (!camera || !camera.speed) return
     if (userSpeed > camera.speed + 5) {
+      const t = getT(language)
       addVoiceAlert({
-        message: `Warning: Speed limit is ${camera.speed} km/h`,
+        message: t('voiceSpeedWarn', { speed: camera.speed }),
         priority: 'critical',
         triggeredAt: Date.now(),
       })
     }
-  }, [userSpeed, addVoiceAlert])
+  }, [userSpeed, addVoiceAlert, language])
 }

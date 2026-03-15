@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useEventsStore } from '../../store/eventsStore'
 import { deleteReport } from '../../services/api'
+import { useT } from '../../i18n/useT'
 import { TrafficEvent } from '../../types'
 
 const PROXIMITY_METERS = 200
@@ -26,11 +27,10 @@ export const NearbyReportPrompt: React.FC = () => {
   const [countdown, setCount] = useState(DISMISS_SECONDS)
   const shownIds              = useRef<Set<string>>(new Set())
   const timerRef              = useRef<ReturnType<typeof setInterval> | null>(null)
+  const t = useT()
 
-  // Find nearest unshown user_report within proximity
   useEffect(() => {
     if (!userPosition || active) return
-
     const nearest = events
       .filter(e =>
         e.source === 'user_report' &&
@@ -48,10 +48,8 @@ export const NearbyReportPrompt: React.FC = () => {
     }
   }, [userPosition, events, active])
 
-  // Countdown timer — auto-dismiss prompt (but NOT the report)
   useEffect(() => {
     if (!active) return
-
     timerRef.current = setInterval(() => {
       setCount(prev => {
         if (prev <= 1) {
@@ -62,21 +60,15 @@ export const NearbyReportPrompt: React.FC = () => {
         return prev - 1
       })
     }, 1000)
-
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [active])
 
   const handleRemove = async () => {
     if (!active) return
     clearInterval(timerRef.current!)
-
-    // Remove from local store immediately
     removeEvent(active.id)
-
-    // Remove from server (strip 'report-' prefix if present)
-    const serverId = active.id.replace(/^report-/, '').replace(/^local-\d+-/, '')
+    const serverId = active.id.replace(/^report-/, '')
     try { await deleteReport(serverId) } catch { /* best effort */ }
-
     setActive(null)
   }
 
@@ -94,27 +86,25 @@ export const NearbyReportPrompt: React.FC = () => {
           <span className="text-4xl">{ICONS[active.type] ?? '📍'}</span>
           <div>
             <div className="text-white font-semibold text-base">{active.title}</div>
-            <div className="text-gray-400 text-sm">Is this still here?</div>
+            <div className="text-gray-400 text-sm">{t('isStillHere')}</div>
           </div>
-          {/* Countdown ring */}
           <div className="ml-auto text-center">
             <div className="text-2xl font-bold text-yellow-400">{countdown}</div>
             <div className="text-gray-500 text-xs">sec</div>
           </div>
         </div>
-
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={handleKeep}
             className="py-3 rounded-xl bg-green-800/60 border border-green-500/40 text-green-300 font-semibold text-base active:scale-95 transition-transform"
           >
-            ✓ Still there
+            {t('stillThere')}
           </button>
           <button
             onClick={handleRemove}
             className="py-3 rounded-xl bg-red-800/60 border border-red-500/40 text-red-300 font-semibold text-base active:scale-95 transition-transform"
           >
-            ✕ Remove
+            {t('remove')}
           </button>
         </div>
       </div>

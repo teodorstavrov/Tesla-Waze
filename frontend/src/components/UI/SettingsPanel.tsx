@@ -1,24 +1,26 @@
 import React from 'react'
 import { useUIStore } from '../../store/uiStore'
+import { useT } from '../../i18n/useT'
 
 export const SettingsPanel: React.FC = () => {
-  const { voiceEnabled, setVoiceEnabled, isDrivingMode, setDrivingMode, showSpeedometer } = useUIStore()
+  const { voiceEnabled, setVoiceEnabled, isDrivingMode, setDrivingMode } = useUIStore()
+  const t = useT()
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-white font-semibold text-lg">⚙️ Settings</h2>
+      <h2 className="text-white font-semibold text-lg">{t('settingsTitle')}</h2>
 
       <SettingRow
-        label="Voice Alerts"
-        description="Announce events as you approach"
+        label={t('voiceAlerts')}
+        description={t('voiceAlertsDesc')}
         icon="🔊"
         value={voiceEnabled}
         onChange={setVoiceEnabled}
       />
 
       <SettingRow
-        label="Driving Mode"
-        description="Minimize distractions while driving"
+        label={t('drivingMode')}
+        description={t('drivingModeDesc')}
         icon="🚗"
         value={isDrivingMode}
         onChange={setDrivingMode}
@@ -36,11 +38,8 @@ export const SettingsPanel: React.FC = () => {
 }
 
 const SettingRow: React.FC<{
-  label: string
-  description: string
-  icon: string
-  value: boolean
-  onChange: (v: boolean) => void
+  label: string; description: string; icon: string
+  value: boolean; onChange: (v: boolean) => void
 }> = ({ label, description, icon, value, onChange }) => (
   <button
     onClick={() => onChange(!value)}

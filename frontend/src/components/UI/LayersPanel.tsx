@@ -1,17 +1,31 @@
 import React from 'react'
 import { useUIStore } from '../../store/uiStore'
+import { useT } from '../../i18n/useT'
 import { EventType } from '../../types'
 
 export const LayersPanel: React.FC = () => {
   const { layers, toggleLayer, mapStyle, setMapStyle } = useUIStore()
+  const t = useT()
+
+  const LAYER_LABELS: Record<string, string> = {
+    police:       t('layerPolice'),
+    speed_camera: t('layerCamera'),
+    accident:     t('layerAccident'),
+    traffic:      t('layerTraffic'),
+    hazard:       t('layerHazard'),
+    construction: t('layerConstruction'),
+    ev_station:   t('layerEV'),
+    risk_zones:   t('layerRisk'),
+    road_closure: t('layerRoadClosure'),
+  }
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-white font-semibold text-lg">🗺️ Map Layers</h2>
+      <h2 className="text-white font-semibold text-lg">{t('mapLayers')}</h2>
 
       {/* Map style */}
       <div className="flex flex-col gap-2">
-        <div className="text-tesla-muted text-xs uppercase tracking-wide">Map Style</div>
+        <div className="text-tesla-muted text-xs uppercase tracking-wide">{t('mapStyle')}</div>
         <div className="grid grid-cols-3 gap-2">
           {(['light', 'dark', 'satellite'] as const).map(style => (
             <button
@@ -23,7 +37,7 @@ export const LayersPanel: React.FC = () => {
                   : 'bg-black/20 border-tesla-border text-tesla-muted'
                 }`}
             >
-              {style === 'light' ? '☀️ Day' : style === 'dark' ? '🌙 Night' : '🛰️ Satellite'}
+              {style === 'light' ? t('styleDay') : style === 'dark' ? t('styleNight') : t('styleSat')}
             </button>
           ))}
         </div>
@@ -31,7 +45,7 @@ export const LayersPanel: React.FC = () => {
 
       {/* Layer toggles */}
       <div className="flex flex-col gap-2">
-        <div className="text-tesla-muted text-xs uppercase tracking-wide">Event Layers</div>
+        <div className="text-tesla-muted text-xs uppercase tracking-wide">{t('eventLayers')}</div>
         {layers.map(layer => (
           <button
             key={layer.id}
@@ -40,9 +54,8 @@ export const LayersPanel: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <span className="text-xl">{layer.icon}</span>
-              <span className="text-tesla-text font-medium">{layer.label}</span>
+              <span className="text-tesla-text font-medium">{LAYER_LABELS[layer.id] ?? layer.label}</span>
             </div>
-            {/* Toggle switch */}
             <div className={`w-11 h-6 rounded-full transition-colors relative ${layer.enabled ? 'bg-blue-500' : 'bg-tesla-border'}`}>
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${layer.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
             </div>

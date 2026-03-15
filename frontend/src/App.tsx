@@ -9,17 +9,17 @@ import { useWebSocket } from './hooks/useWebSocket'
 import { useVoiceAlerts } from './hooks/useVoiceAlerts'
 import { useDataPolling } from './hooks/useDataPolling'
 import { useEventsStore } from './store/eventsStore'
+import { useT } from './i18n/useT'
 
 // Connection status indicator
 const ConnectionBadge: React.FC = () => {
-  const isLoading = useEventsStore(s => s.isLoading)
   const error = useEventsStore(s => s.error)
-  const lastUpdated = useEventsStore(s => s.lastUpdated)
+  const t = useT()
 
   if (error) {
     return (
       <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000] bg-red-900/80 border border-red-500/50 rounded-xl px-3 py-1.5 text-red-300 text-xs">
-        ⚠️ Connection error
+        {t('connectionError')}
       </div>
     )
   }

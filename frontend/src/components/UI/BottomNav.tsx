@@ -1,23 +1,19 @@
 import React from 'react'
 import { useUIStore } from '../../store/uiStore'
 import { useRouteStore } from '../../store/routeStore'
+import { useT } from '../../i18n/useT'
 import { PanelId } from '../../types'
-
-interface NavItem {
-  id: PanelId
-  icon: string
-  label: string
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { id: 'ev',       icon: '⚡', label: 'Charging' },
-  { id: 'report',   icon: '📍', label: 'Report' },
-  { id: 'settings', icon: '⚙️', label: 'Settings' },
-]
 
 export const BottomNav: React.FC = () => {
   const { activePanel, togglePanel } = useUIStore()
   const { isNavigating, clearRoute } = useRouteStore()
+  const t = useT()
+
+  const NAV_ITEMS: { id: PanelId; icon: string; label: string }[] = [
+    { id: 'ev',       icon: '⚡', label: t('navCharging') },
+    { id: 'report',   icon: '📍', label: t('navReport')   },
+    { id: 'settings', icon: '⚙️', label: t('navSettings') },
+  ]
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-[1000] flex items-center justify-around px-2 pb-safe pointer-events-none">

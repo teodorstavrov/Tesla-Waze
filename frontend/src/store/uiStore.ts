@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { PanelId, MapLayer, VoiceAlert, EventType } from '../types'
+import { Lang } from '../i18n/translations'
 
 interface UIState {
   activePanel: PanelId | null
@@ -11,6 +12,7 @@ interface UIState {
   pendingAlerts: VoiceAlert[]
   mapStyle: 'light' | 'dark' | 'satellite'
   zoom: number
+  language: Lang
 
   setActivePanel: (panel: PanelId | null) => void
   togglePanel: (panel: PanelId) => void
@@ -22,6 +24,7 @@ interface UIState {
   setMapStyle: (s: UIState['mapStyle']) => void
   toggleDayNight: () => void
   setZoom: (z: number) => void
+  setLanguage: (l: Lang) => void
 }
 
 const defaultLayers: MapLayer[] = [
@@ -45,6 +48,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   pendingAlerts: [],
   mapStyle: 'light',
   zoom: 14,
+  language: 'en',
 
   setActivePanel: (activePanel) => set({ activePanel }),
 
@@ -78,4 +82,5 @@ export const useUIStore = create<UIState>((set, get) => ({
   setMapStyle: (mapStyle) => set({ mapStyle }),
   toggleDayNight: () => set(s => ({ mapStyle: s.mapStyle === 'dark' ? 'light' : 'dark' })),
   setZoom: (zoom) => set({ zoom }),
+  setLanguage: (language) => set({ language }),
 }))
