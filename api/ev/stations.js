@@ -1,7 +1,129 @@
-// Vercel Edge Function — EV charging stations via OpenChargeMap
-export const config = { runtime: 'edge' }
+// Vercel Edge Function — EV charging stations
+// Sources: OpenChargeMap (primary) + OpenStreetMap/Overpass (secondary)
+export const config = { runtime: 'edge', maxDuration: 25 }
 
+const HEADERS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+
+// ─── OpenChargeMap ────────────────────────────────────────────────────────────
+async function fetchOCM(lat, lng, apiKey) {
+  const url = `https://api.openchargemap.io/v3/poi?output=json&latitude=${lat}&longitude=${lng}&distance=20&distanceunit=km&maxresults=200&compact=true&verbose=false${apiKey ? `&key=${apiKey}` : ''}`
+  const res  = await fetch(url, { signal: AbortSignal.timeout(10000) })
+  if (!res.ok) throw new Error(`OCM ${res.status}`)
+  const data = await res.json()
+
+  return (data ?? [])
+    .filter(s => {
+      const a = s.AddressInfo ?? {}
+      return typeof a.Latitude === 'number' && typeof a.Longitude === 'number' &&
+             !isNaN(a.Latitude) && !isNaN(a.Longitude)
+    })
+    .map(s => {
+      const addr  = s.AddressInfo ?? {}
+      const conns = (s.Connections ?? []).map(c => ({
+        type:      c.ConnectionType?.Title ?? 'Unknown',
+        powerKw:   c.PowerKW ?? 0,
+        available: c.StatusType?.IsOperational !== false,
+        total:     1,
+      }))
+      return {
+        id:            `ocm-${s.ID}`,
+        name:          addr.Title ?? 'EV Station',
+        position:      { lat: addr.Latitude, lng: addr.Longitude },
+        operator:      s.OperatorInfo?.Title ?? 'Unknown',
+        connectors:    conns,
+        totalPorts:    s.NumberOfPoints ?? conns.length ?? 1,
+        availablePorts: conns.filter(c => c.available).length,
+        isTesla:       (s.OperatorInfo?.Title ?? '').toLowerCase().includes('tesla'),
+        amenities:     [],
+        pricePerKwh:   undefined,
+      }
+    })
+}
+
+// ─── OpenStreetMap / Overpass ─────────────────────────────────────────────────
+const OVERPASS_MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+]
+
+async function fetchOverpass(north, south, east, west) {
+  const query = `[out:json][timeout:20];(node["amenity"="charging_station"](${south},${west},${north},${east});way["amenity"="charging_station"](${south},${west},${north},${east}););out center tags;`
+
+  for (const mirror of OVERPASS_MIRRORS) {
+    try {
+      const res = await fetch(mirror, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(12000),
+      })
+      if (!res.ok) continue
+      const data = await res.json()
+
+      return (data.elements ?? []).map(el => {
+        const lat = el.lat ?? el.center?.lat
+        const lng = el.lon ?? el.center?.lon
+        if (!lat || !lng) return null
+
+        const tags     = el.tags ?? {}
+        const sockets  = parseInt(tags['capacity'] ?? tags['charging_station:output'] ?? '1', 10)
+        const operator = tags['operator'] ?? tags['brand'] ?? 'Unknown'
+        const name     = tags['name'] ?? tags['brand'] ?? operator ?? 'Charging Station'
+        const network  = (operator + name).toLowerCase()
+
+        // Build connector list from OSM tags
+        const conns = []
+        const connTypes = ['chademo','type2','ccs','tesla','schuko','type1']
+        connTypes.forEach(t => {
+          if (tags[`socket:${t}`] || tags[`socket:${t}:output`]) {
+            conns.push({
+              type:      t.toUpperCase().replace('TYPE2','Type 2').replace('SCHUKO','Schuko'),
+              powerKw:   parseFloat(tags[`socket:${t}:output`] ?? '0') || 0,
+              available: true,
+              total:     parseInt(tags[`socket:${t}`] ?? '1', 10),
+            })
+          }
+        })
+        if (conns.length === 0) conns.push({ type: 'Unknown', powerKw: 0, available: true, total: 1 })
+
+        return {
+          id:            `osm-${el.id}`,
+          name,
+          position:      { lat, lng },
+          operator,
+          connectors:    conns,
+          totalPorts:    isNaN(sockets) ? conns.length : sockets,
+          availablePorts: conns.length,
+          isTesla:       network.includes('tesla'),
+          amenities:     [],
+          pricePerKwh:   undefined,
+        }
+      }).filter(Boolean)
+    } catch {
+      continue
+    }
+  }
+  return []
+}
+
+// ─── Deduplicate by position (~50m threshold) ─────────────────────────────────
+function dedup(stations) {
+  const result = []
+  for (const s of stations) {
+    const duplicate = result.some(r =>
+      Math.abs(r.position.lat - s.position.lat) < 0.0005 &&
+      Math.abs(r.position.lng - s.position.lng) < 0.0005
+    )
+    if (!duplicate) result.push(s)
+  }
+  return result
+}
+
+// ─── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req) {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: HEADERS })
+
   const url   = new URL(req.url)
   const north = parseFloat(url.searchParams.get('north') ?? '')
   const south = parseFloat(url.searchParams.get('south') ?? '')
@@ -9,61 +131,28 @@ export default async function handler(req) {
   const west  = parseFloat(url.searchParams.get('west')  ?? '')
 
   if ([north, south, east, west].some(isNaN)) {
-    return new Response(JSON.stringify({ stations: [] }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    })
+    return new Response(JSON.stringify({ stations: [] }), { headers: HEADERS })
   }
 
   const lat    = (north + south) / 2
   const lng    = (east + west) / 2
   const apiKey = process.env.OPENCHARGEMAP_API_KEY ?? ''
 
-  try {
-    const res = await fetch(
-      `https://api.openchargemap.io/v3/poi?output=json&latitude=${lat}&longitude=${lng}&distance=15&distanceunit=km&maxresults=50&compact=true&verbose=false${apiKey ? `&key=${apiKey}` : ''}`,
-      { signal: AbortSignal.timeout(8000) }
-    )
-    if (!res.ok) throw new Error(`OCM ${res.status}`)
-    const data = await res.json()
+  const [ocmResult, osmResult] = await Promise.allSettled([
+    fetchOCM(lat, lng, apiKey),
+    fetchOverpass(north, south, east, west),
+  ])
 
-    const stations = (data ?? [])
-      .filter(s => {
-        const a = s.AddressInfo ?? {}
-        // Skip stations with missing or invalid coordinates
-        return typeof a.Latitude === 'number' && typeof a.Longitude === 'number' &&
-               !isNaN(a.Latitude) && !isNaN(a.Longitude)
-      })
-      .map(s => {
-        const addr  = s.AddressInfo ?? {}
-        const conns = (s.Connections ?? []).map(c => ({
-          type:      c.ConnectionType?.Title ?? 'Unknown',
-          powerKw:   c.PowerKW ?? 0,
-          available: c.StatusType?.IsOperational === true,
-          total:     1,
-        }))
-        const availablePorts = conns.filter(c => c.available).length
-        const totalPorts     = s.NumberOfPoints ?? conns.length ?? 1
-        return {
-          id:             `ocm-${s.ID}`,
-          name:           addr.Title ?? 'EV Station',
-          position:       { lat: addr.Latitude, lng: addr.Longitude },
-          operator:       s.OperatorInfo?.Title ?? 'Unknown',
-          connectors:     conns,
-          totalPorts,
-          availablePorts,
-          isTesla:        (s.OperatorInfo?.Title ?? '').toLowerCase().includes('tesla'),
-          amenities:      [],
-          pricePerKwh:    undefined,
-        }
-      })
+  const ocm = ocmResult.status === 'fulfilled' ? ocmResult.value : []
+  const osm = osmResult.status === 'fulfilled' ? osmResult.value : []
 
-    return new Response(JSON.stringify({ stations }), {
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 's-maxage=300', 'Access-Control-Allow-Origin': '*' }
-    })
-  } catch (err) {
-    console.error('OCM error:', err.message)
-    return new Response(JSON.stringify({ stations: [] }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    })
-  }
+  // OCM first (has availability data), then fill with OSM
+  const stations = dedup([...ocm, ...osm])
+
+  return new Response(JSON.stringify({
+    stations,
+    _sources: { ocm: ocm.length, osm: osm.length, total: stations.length }
+  }), {
+    headers: { ...HEADERS, 'Cache-Control': 's-maxage=300' }
+  })
 }

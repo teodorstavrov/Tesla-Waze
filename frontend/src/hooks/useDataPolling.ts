@@ -68,7 +68,7 @@ export function useDataPolling() {
       const evLayer = layers.find(l => l.id === 'ev_station')
       if (!evLayer?.enabled) return
       try {
-        const stations = await fetchEVStations(getBBox(center.lat, center.lng, 10))
+        const stations = await fetchEVStations(getBBox(center.lat, center.lng, 20))
         setEVStations(stations)
       } catch (err) {
         console.error('[DataPolling] EV error:', err)
