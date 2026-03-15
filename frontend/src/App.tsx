@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { MapView } from './components/Map/MapContainer'
 import { TopBar } from './components/UI/TopBar'
 import { BottomNav } from './components/UI/BottomNav'
@@ -59,6 +60,7 @@ const App: React.FC = () => {
       <FloatingPanel />
       <NearbyReportPrompt />
       <BottomNav />
+      <Analytics />
     </div>
   )
 }
