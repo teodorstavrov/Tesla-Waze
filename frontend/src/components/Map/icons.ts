@@ -23,7 +23,7 @@ const svgIcon = (emoji: string, color: string, size = 36) => {
 }
 
 export const EventIcons: Record<string, L.DivIcon> = {
-  police:       svgIcon('🚔', '#EF4444'),
+  police:       svgIcon('👮', '#3B82F6'),
   speed_camera: svgIcon('📷', '#F59E0B'),
   accident:     svgIcon('💥', '#F97316'),
   traffic:      svgIcon('🚦', '#8B5CF6'),
