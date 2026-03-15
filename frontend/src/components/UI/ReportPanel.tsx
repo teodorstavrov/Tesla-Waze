@@ -13,7 +13,7 @@ export const ReportPanel: React.FC = () => {
   const t = useT()
 
   const REPORT_TYPES: Array<{ type: UserReport['type']; icon: string; label: string; color: string }> = [
-    { type: 'police',       icon: '🚔', label: t('reportPolice'),   color: 'border-red-500/50 bg-red-900/20 active:bg-red-900/40' },
+    { type: 'police',       icon: '👮', label: t('reportPolice'),   color: 'border-red-500/50 bg-red-900/20 active:bg-red-900/40' },
     { type: 'speed_camera', icon: '📷', label: t('reportCamera'),   color: 'border-yellow-500/50 bg-yellow-900/20 active:bg-yellow-900/40' },
     { type: 'accident',     icon: '💥', label: t('reportAccident'), color: 'border-orange-500/50 bg-orange-900/20 active:bg-orange-900/40' },
     { type: 'hazard',       icon: '⚠️', label: t('reportHazard'),   color: 'border-yellow-500/50 bg-yellow-900/20 active:bg-yellow-900/40' },

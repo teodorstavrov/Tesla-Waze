@@ -18,7 +18,7 @@ function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: 
 }
 
 const ICONS: Record<string, string> = {
-  police: '🚔', accident: '💥', hazard: '⚠️', speed_camera: '📷',
+  police: '👮', accident: '💥', hazard: '⚠️', speed_camera: '📷',
 }
 
 export const NearbyReportPrompt: React.FC = () => {
