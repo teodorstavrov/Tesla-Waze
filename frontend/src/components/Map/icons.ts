@@ -33,16 +33,22 @@ export const EventIcons: Record<string, L.DivIcon> = {
   road_closure: svgIcon('🚫', '#DC2626'),
 }
 
-export const UserIcon = L.divIcon({
+export const UserArrowIcon = (heading: number) => L.divIcon({
   html: `
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-      <circle cx="24" cy="24" r="22" fill="#3B82F6" opacity="0.2" stroke="#3B82F6" stroke-width="2"/>
-      <circle cx="24" cy="24" r="10" fill="#3B82F6" stroke="#fff" stroke-width="3"/>
-      <circle cx="24" cy="24" r="4" fill="#fff"/>
+      <g transform="rotate(${heading}, 24, 24)">
+        <!-- Accuracy halo -->
+        <circle cx="24" cy="24" r="22" fill="#3B82F6" opacity="0.12"/>
+        <!-- Navigation arrow pointing up (north = 0°) -->
+        <polygon points="24,4 36,38 24,30 12,38"
+          fill="#3B82F6" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Center dot -->
+        <circle cx="24" cy="24" r="3" fill="#fff" opacity="0.9"/>
+      </g>
     </svg>`,
   className: '',
   iconSize: [48, 48],
-  iconAnchor: [24, 24]
+  iconAnchor: [24, 24],
 })
 
 export const EVIcon = (available: number, total: number) => {
