@@ -28,9 +28,8 @@ export const EVRouteInfoBar: React.FC = () => {
     <div
       style={{
         position: 'absolute',
-        bottom: 80,
-        left: '50%',
-        transform: 'translateX(-50%)',
+        top: 72,
+        left: 8,
         zIndex: 1500,
         width: 'min(400px, 92vw)',
         background: 'rgba(10,10,10,0.94)',
