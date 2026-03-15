@@ -10,10 +10,8 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'route',    icon: '🧭', label: 'Navigate' },
   { id: 'ev',       icon: '⚡', label: 'Charging' },
   { id: 'report',   icon: '📍', label: 'Report' },
-  { id: 'alerts',   icon: '🔔', label: 'Alerts' },
   { id: 'settings', icon: '⚙️', label: 'Settings' },
 ]
 
