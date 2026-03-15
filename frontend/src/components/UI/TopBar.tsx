@@ -64,10 +64,20 @@ export const TopBar: React.FC = () => {
         {/* Language toggle */}
         <button
           onClick={() => setLanguage(language === 'en' ? 'bg' : 'en')}
-          className="bg-tesla-panel/90 backdrop-blur-sm border border-tesla-border rounded-2xl px-3 h-11 flex items-center justify-center active:scale-95 transition-transform font-bold text-sm text-white"
+          className="relative overflow-hidden bg-tesla-panel/90 backdrop-blur-sm border border-tesla-border rounded-2xl px-3 h-11 flex items-center justify-center active:scale-95 transition-transform font-bold text-sm text-white"
           title="Switch language"
         >
-          {language === 'en' ? 'BG' : 'EN'}
+          {/* Bulgarian flag overlay — shown when button reads "BG" */}
+          <span
+            className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0.28) 33.3%, rgba(0,150,57,0.32) 33.3%, rgba(0,150,57,0.32) 66.6%, rgba(214,38,18,0.32) 66.6%)',
+              opacity: language === 'en' ? 1 : 0,
+            }}
+          />
+          <span className="relative" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+            {language === 'en' ? 'BG' : 'EN'}
+          </span>
         </button>
 
         {/* Day / Night toggle */}
