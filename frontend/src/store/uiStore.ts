@@ -35,7 +35,6 @@ const defaultLayers: MapLayer[] = [
   { id: 'hazard',       label: 'Hazards',          icon: '⚠️', enabled: true,  color: '#EAB308' },
   { id: 'construction', label: 'Construction',     icon: '🚧', enabled: true,  color: '#F97316' },
   { id: 'ev_station',   label: 'EV Charging',      icon: '⚡', enabled: true,  color: '#22C55E' },
-  { id: 'risk_zones',   label: 'Risk Zones',       icon: '🔴', enabled: false, color: '#DC2626' },
 ]
 
 export const useUIStore = create<UIState>((set, get) => ({

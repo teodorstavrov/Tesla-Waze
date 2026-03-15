@@ -4,7 +4,7 @@ import { useT } from '../../i18n/useT'
 import { EventType } from '../../types'
 
 export const SettingsPanel: React.FC = () => {
-  const { voiceEnabled, setVoiceEnabled, isDrivingMode, setDrivingMode, layers, toggleLayer } = useUIStore()
+  const { voiceEnabled, setVoiceEnabled, layers, toggleLayer } = useUIStore()
   const t = useT()
 
   const LAYER_LABELS: Record<string, string> = {
@@ -15,7 +15,6 @@ export const SettingsPanel: React.FC = () => {
     hazard:       t('layerHazard'),
     construction: t('layerConstruction'),
     ev_station:   t('layerEV'),
-    risk_zones:   t('layerRisk'),
     road_closure: t('layerRoadClosure'),
   }
 
@@ -29,14 +28,6 @@ export const SettingsPanel: React.FC = () => {
         icon="🔊"
         value={voiceEnabled}
         onChange={setVoiceEnabled}
-      />
-
-      <SettingRow
-        label={t('drivingMode')}
-        description={t('drivingModeDesc')}
-        icon="🚗"
-        value={isDrivingMode}
-        onChange={setDrivingMode}
       />
 
       {/* Event Layers */}
