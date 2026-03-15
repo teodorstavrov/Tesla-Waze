@@ -56,12 +56,29 @@ export const TopBar: React.FC = () => {
           </div>
         )}
         {nextCamera && (
-          <div className="flex items-center gap-1 bg-yellow-900/80 border border-yellow-500/50 rounded-xl px-3 py-2">
+          <div className="flex items-center gap-2 bg-yellow-900/80 border border-yellow-500/50 rounded-xl px-3 py-2">
             <span className="text-base">📷</span>
             <span className="text-yellow-300 text-sm font-semibold">
               {nextCamera.distance ? fmtDist(nextCamera.distance) : ''}
-              {nextCamera.speed ? ` · ${nextCamera.speed}` : ''}
             </span>
+            {nextCamera.speed && (
+              <div style={{
+                width: 34, height: 34, borderRadius: '50%',
+                background: '#fff',
+                border: '3px solid #e00',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  color: '#111', fontWeight: 800,
+                  fontSize: nextCamera.speed >= 100 ? 10 : 12,
+                  lineHeight: 1, letterSpacing: '-0.5px',
+                }}>
+                  {nextCamera.speed}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
