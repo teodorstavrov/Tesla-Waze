@@ -125,12 +125,17 @@ async function fetchTesla(north, south, east, west) {
     teslaCacheAt = now
   }
 
+  // Bulgaria bounding box — always include all Bulgarian Superchargers
+  const BG = { north: 44.2, south: 41.2, east: 28.6, west: 22.4 }
+
   return teslaCache
     .filter(s => {
       if (s.status !== 'OPEN') return false
       const { latitude: lat, longitude: lng } = s.gps ?? {}
       if (!lat || !lng) return false
-      return lat >= south && lat <= north && lng >= west && lng <= east
+      const inViewport  = lat >= south  && lat <= north  && lng >= west  && lng <= east
+      const inBulgaria  = lat >= BG.south && lat <= BG.north && lng >= BG.west && lng <= BG.east
+      return inViewport || inBulgaria
     })
     .map(s => {
       const { latitude: lat, longitude: lng } = s.gps
