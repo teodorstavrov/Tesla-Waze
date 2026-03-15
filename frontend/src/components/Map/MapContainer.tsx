@@ -4,6 +4,7 @@ import { LatLngExpression } from 'leaflet'
 import { useEventsStore } from '../../store/eventsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useRouteStore } from '../../store/routeStore'
+import { useT } from '../../i18n/useT'
 import { wsService } from '../../services/websocket'
 import { EventMarkers } from './EventMarkers'
 import { EVMarkers } from './EVMarkers'
@@ -60,26 +61,42 @@ function ZoomControls() {
   )
 }
 
-// Recenter button — bottom-left
-function RecenterButton() {
-  const map          = useMap()
-  const userPosition = useEventsStore(s => s.userPosition)
-  if (!userPosition) return null
+// Recenter + Day/Night — bottom-left column
+function BottomLeftControls() {
+  const map             = useMap()
+  const userPosition    = useEventsStore(s => s.userPosition)
+  const { mapStyle, toggleDayNight } = useUIStore()
+  const t               = useT()
+
   return (
     <div
       className="leaflet-bottom leaflet-left"
       style={{ pointerEvents: 'auto', zIndex: 1000, marginBottom: '90px', marginLeft: '8px' }}
     >
-      <div className="leaflet-control">
+      <div className="leaflet-control" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Day / Night toggle */}
         <button
-          title="Recenter"
+          title={t(mapStyle === 'dark' ? 'toDayMode' : 'toNightMode')}
           style={btnStyle}
           onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
           onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-          onClick={() => map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), { animate: true, duration: 0.8 })}
+          onClick={toggleDayNight}
         >
-          🎯
+          {mapStyle === 'dark' ? '☀️' : '🌙'}
         </button>
+
+        {/* Recenter */}
+        {userPosition && (
+          <button
+            title="Recenter"
+            style={btnStyle}
+            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
+            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+            onClick={() => map.setView([userPosition.lat, userPosition.lng], Math.max(map.getZoom(), 15), { animate: true, duration: 0.8 })}
+          >
+            🎯
+          </button>
+        )}
       </div>
     </div>
   )
@@ -164,7 +181,7 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
       <UserFollower />
       <BBoxEmitter />
       <ZoomControls />
-      <RecenterButton />
+      <BottomLeftControls />
 
       {/* User position */}
       <UserMarker />

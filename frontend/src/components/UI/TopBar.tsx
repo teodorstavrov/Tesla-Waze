@@ -7,7 +7,7 @@ import { useT } from '../../i18n/useT'
 export const TopBar: React.FC = () => {
   const { userSpeed, nextPolice, nextCamera } = useEventsStore()
   const { activeRoute, isNavigating } = useRouteStore()
-  const { voiceEnabled, setVoiceEnabled, togglePanel, mapStyle, toggleDayNight, language, setLanguage } = useUIStore()
+  const { voiceEnabled, setVoiceEnabled, togglePanel, language, setLanguage } = useUIStore()
   const t = useT()
 
   const riskScore = activeRoute?.summary.riskScore ?? 0
@@ -78,15 +78,6 @@ export const TopBar: React.FC = () => {
           <span className="relative" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
             {language === 'en' ? 'BG' : 'EN'}
           </span>
-        </button>
-
-        {/* Day / Night toggle */}
-        <button
-          onClick={toggleDayNight}
-          className="bg-tesla-panel/90 backdrop-blur-sm border border-tesla-border rounded-2xl p-2 w-11 h-11 flex items-center justify-center active:scale-95 transition-transform"
-          title={t(mapStyle === 'dark' ? 'toDayMode' : 'toNightMode')}
-        >
-          <span className="text-lg">{mapStyle === 'dark' ? '☀️' : '🌙'}</span>
         </button>
 
         {/* Voice toggle */}
