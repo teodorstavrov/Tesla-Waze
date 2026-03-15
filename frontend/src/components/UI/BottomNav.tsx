@@ -24,7 +24,7 @@ export const BottomNav: React.FC = () => {
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-[1000] flex items-center justify-around px-2 pb-safe pointer-events-none">
-      <div className="relative pointer-events-auto w-full max-w-lg mx-auto flex items-center gap-1 bg-tesla-panel/70 backdrop-blur-md border border-tesla-border rounded-t-3xl px-3 pt-3 pb-4 shadow-panel">
+      <div className="relative pointer-events-auto w-full max-w-lg mx-auto flex items-center gap-1 bg-tesla-panel/70 backdrop-blur-md border border-tesla-border rounded-t-3xl px-3 pt-3 pb-4 shadow-panel" style={{ opacity: 0.7 }}>
         {/* Bulgarian flag overlay — opacity-only transition for GPU compositing */}
         <div
           className="absolute inset-0 rounded-t-3xl pointer-events-none transition-opacity duration-500"
