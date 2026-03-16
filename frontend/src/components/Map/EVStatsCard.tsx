@@ -28,7 +28,7 @@ export const EVStatsCard: React.FC = () => {
   const language             = useUIStore(s => s.language)
   const [stats, setStats]   = useState<EVStats | null>(null)
   const [view, setView]     = useState<View>('totals')
-  const [open, setOpen]     = useState(true)
+  const [open, setOpen]     = useState(false)
 
   useEffect(() => {
     fetch('/data/ev-stats-bg.json')

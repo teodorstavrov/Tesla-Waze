@@ -33,7 +33,6 @@ const defaultLayers: MapLayer[] = [
   { id: 'accident',     label: 'Accidents',        icon: '💥', enabled: true,  color: '#F97316' },
   { id: 'traffic',      label: 'Traffic',          icon: '🚦', enabled: true,  color: '#8B5CF6' },
   { id: 'hazard',       label: 'Hazards',          icon: '⚠️', enabled: true,  color: '#EAB308' },
-  { id: 'construction', label: 'Construction',     icon: '🚧', enabled: true,  color: '#F97316' },
   { id: 'ev_station',   label: 'EV Charging',      icon: '⚡', enabled: true,  color: '#22C55E' },
 ]
 

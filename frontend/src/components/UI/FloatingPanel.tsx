@@ -28,7 +28,7 @@ export const FloatingPanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div
-        className="absolute inset-0 z-[900] bg-black/20 backdrop-blur-xs"
+        className="absolute inset-0 z-[900]"
         onClick={() => setActivePanel(null)}
       />
 

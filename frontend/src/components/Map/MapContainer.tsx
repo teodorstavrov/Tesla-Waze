@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { MapContainer as LeafletMap, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { LatLngExpression } from 'leaflet'
 import { useEventsStore } from '../../store/eventsStore'
@@ -144,22 +144,19 @@ function MapRecenterer() {
   return null
 }
 
-// Follow user position
+// Follow user position — always keeps avatar centred while moving
 function UserFollower() {
-  const map = useMap()
+  const map          = useMap()
   const userPosition = useEventsStore(s => s.userPosition)
   const isNavigating = useRouteStore(s => s.isNavigating)
-  const hasInitialized = useRef(false)
 
   useEffect(() => {
     if (!userPosition) return
-    if (!hasInitialized.current || isNavigating) {
-      map.setView([userPosition.lat, userPosition.lng], isNavigating ? 16 : map.getZoom(), {
-        animate: true,
-        duration: 0.5
-      })
-      hasInitialized.current = true
-    }
+    map.setView(
+      [userPosition.lat, userPosition.lng],
+      isNavigating ? 16 : map.getZoom(),
+      { animate: true, duration: 0.5 }
+    )
   }, [map, userPosition, isNavigating])
 
   return null
