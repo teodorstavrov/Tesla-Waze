@@ -83,6 +83,22 @@
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+/* ─── Day-mode floating panel — dark text on light background ──────────── */
+[data-day="true"] .text-white,
+[data-day="true"] .text-tesla-text,
+[data-day="true"] h2 {
+  color: #111111 !important;
+}
+[data-day="true"] .text-tesla-muted {
+  color: #444444 !important;
+}
+[data-day="true"] .border-tesla-border {
+  border-color: rgba(0,0,0,0.14) !important;
+}
+[data-day="true"] .bg-tesla-border {
+  background-color: rgba(0,0,0,0.14) !important;
+}
+
 /* Prevent overscroll */
 html, body {
   overscroll-behavior: none;

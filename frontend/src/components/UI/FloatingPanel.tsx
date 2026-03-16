@@ -8,7 +8,8 @@ import { LayersPanel } from './LayersPanel'
 import { SettingsPanel } from './SettingsPanel'
 
 export const FloatingPanel: React.FC = () => {
-  const { activePanel, setActivePanel } = useUIStore()
+  const { activePanel, setActivePanel, mapStyle } = useUIStore()
+  const isDay = mapStyle === 'light'
 
   if (!activePanel) return null
 
@@ -34,10 +35,18 @@ export const FloatingPanel: React.FC = () => {
 
       {/* Panel — same width as BottomNav */}
       <div className="absolute left-0 right-0 bottom-[72px] z-[950] px-2 animate-slide-up">
-        <div className="max-w-lg mx-auto bg-tesla-panel/98 backdrop-blur-md border border-tesla-border rounded-3xl p-5 shadow-panel max-h-[70vh] overflow-y-auto">
+        <div
+          data-day={isDay ? 'true' : undefined}
+          className="max-w-lg mx-auto backdrop-blur-md rounded-3xl p-5 shadow-panel max-h-[70vh] overflow-y-auto"
+          style={isDay
+            ? { background: 'rgba(248,248,248,0.98)', border: '1px solid rgba(0,0,0,0.12)' }
+            : { background: 'rgba(17,17,17,0.98)',   border: '1px solid #1f1f1f' }
+          }
+        >
           <button
             onClick={() => setActivePanel(null)}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-tesla-muted hover:text-white transition-colors"
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center transition-colors"
+            style={{ color: isDay ? '#555' : '#6b7280' }}
           >
             ✕
           </button>
