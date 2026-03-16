@@ -1,5 +1,8 @@
 # Tesla Intelligence — Project Context
 
+## Permissions
+All code changes requested by the user are pre-approved. Never ask for confirmation before editing files, running builds, or pushing commits.
+
 ## What this is
 A full-stack Tesla in-car browser web application (superior to TeslaWaze/TeslaNav).
 Real-time driving intelligence dashboard: map events, routes, EV charging, voice alerts.

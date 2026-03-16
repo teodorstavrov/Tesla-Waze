@@ -45,7 +45,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showSpeedometer: true,
   pendingAlerts: [],
   mapStyle: 'light',
-  zoom: 14,
+  zoom: 16,
   language: 'en',
 
   setActivePanel: (activePanel) => set({ activePanel }),

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import { MapContainer as LeafletMap, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { LatLngExpression } from 'leaflet'
 import { useEventsStore } from '../../store/eventsStore'
@@ -144,20 +144,29 @@ function MapRecenterer() {
   return null
 }
 
-// Follow user position — always keeps avatar centred while moving
+// Follow user position — recentres on GPS movement, pauses on manual drag
 function UserFollower() {
   const map          = useMap()
   const userPosition = useEventsStore(s => s.userPosition)
+  const userSpeed    = useEventsStore(s => s.userSpeed)
   const isNavigating = useRouteStore(s => s.isNavigating)
+  const following    = useRef(true)
+
+  useMapEvents({
+    dragstart() { following.current = false },
+  })
 
   useEffect(() => {
     if (!userPosition) return
+    // Resume following as soon as user is actually moving (GPS-driven)
+    if (userSpeed > 3) following.current = true
+    if (!following.current) return
     map.setView(
       [userPosition.lat, userPosition.lng],
       isNavigating ? 16 : map.getZoom(),
       { animate: true, duration: 0.5 }
     )
-  }, [map, userPosition, isNavigating])
+  }, [map, userPosition, userSpeed, isNavigating])
 
   return null
 }
@@ -194,6 +203,7 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
   const layers = useUIStore(s => s.layers)
 
   const defaultCenter: LatLngExpression = [51.505, -0.09]
+  const defaultZoom = 16
 
   const enabledLayerIds = useMemo(
     () => new Set(layers.filter(l => l.enabled).map(l => l.id)),
@@ -203,7 +213,7 @@ export const MapView: React.FC<Props> = ({ className = '' }) => {
   return (
     <LeafletMap
       center={defaultCenter}
-      zoom={14}
+      zoom={defaultZoom}
       zoomControl={false}
       className={`w-full h-full ${className}`}
       style={{ background: '#0a0a0a' }}

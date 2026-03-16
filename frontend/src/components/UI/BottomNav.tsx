@@ -37,7 +37,7 @@ export const BottomNav: React.FC = () => {
             className={`relative flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-2xl transition-all active:scale-95
               ${activePanel === item.id
                 ? 'bg-tesla-accent/20 text-blue-400'
-                : isBg ? 'text-white' : 'text-tesla-muted hover:text-tesla-text'
+                : 'text-white'
               }`}
             style={isBg ? { textShadow: TEXT_SHADOW } : undefined}
           >
