@@ -104,9 +104,18 @@ export const TopBar: React.FC = () => {
         {/* Voice toggle */}
         <button
           onClick={() => setVoiceEnabled(!voiceEnabled)}
-          className="bg-tesla-panel/90 backdrop-blur-sm border border-tesla-border rounded-2xl p-2 w-11 h-11 flex items-center justify-center active:scale-95 transition-transform"
+          style={{
+            width: 48, height: 48,
+            background: voiceEnabled ? 'rgba(15,15,15,0.92)' : 'rgba(180,30,30,0.85)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22, cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+            flexShrink: 0,
+          }}
         >
-          <span className="text-lg">{voiceEnabled ? '🔊' : '🔇'}</span>
+          {voiceEnabled ? '🔊' : '🔇'}
         </button>
 
       </div>
