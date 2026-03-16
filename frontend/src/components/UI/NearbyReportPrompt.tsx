@@ -4,8 +4,9 @@ import { deleteReport } from '../../services/api'
 import { useT } from '../../i18n/useT'
 import { TrafficEvent } from '../../types'
 
-const PROXIMITY_METERS = 5
-const DISMISS_SECONDS  = 10
+const PROXIMITY_METERS  = 5
+const DISMISS_SECONDS   = 10
+const IGNORE_FRESH_MS   = 60_000   // skip reports created in the last 60s (= own just-submitted report)
 
 function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371000
@@ -31,10 +32,12 @@ export const NearbyReportPrompt: React.FC = () => {
 
   useEffect(() => {
     if (!userPosition || active) return
+    const now = Date.now()
     const nearest = events
       .filter(e =>
         e.source === 'user_report' &&
         !shownIds.current.has(e.id) &&
+        now - new Date(e.reportedAt).getTime() > IGNORE_FRESH_MS &&
         distanceMeters(userPosition, e.position) <= PROXIMITY_METERS
       )
       .sort((a, b) =>
