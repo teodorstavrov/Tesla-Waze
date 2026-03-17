@@ -5,16 +5,16 @@ export const config = { runtime: 'edge', maxDuration: 25 }
 const OVERPASS_MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
 ]
 
 async function fetchOverpass(south, west, north, east) {
-  const query = `[out:json][timeout:25];(node["highway"="speed_camera"](${south},${west},${north},${east});node["enforcement"="maxspeed"](${south},${west},${north},${east}););out body;`
+  const query = `[out:json][timeout:12];(node["highway"="speed_camera"](${south},${west},${north},${east});node["enforcement"="maxspeed"](${south},${west},${north},${east}););out body;`
   const body  = `data=${encodeURIComponent(query)}`
   const hdrs  = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
   const tryMirror = (mirror) =>
-    fetch(mirror, { method: 'POST', headers: hdrs, body, signal: AbortSignal.timeout(15000) })
+    fetch(mirror, { method: 'POST', headers: hdrs, body, signal: AbortSignal.timeout(13000) })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(data => (data.elements ?? []).map(el => ({
         id:          `osm-${el.id}`,
