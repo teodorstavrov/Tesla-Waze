@@ -51,39 +51,22 @@ function parseOverpassElements(elements) {
   return (elements ?? []).map(el => {
     const lat = el.lat ?? el.center?.lat
     const lng = el.lon ?? el.center?.lon
-    if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return null
+    if (lat == null || lng == null) return null
 
     const tags     = el.tags ?? {}
-    const sockets  = parseInt(tags['capacity'] ?? tags['charging_station:output'] ?? '1', 10)
     const operator = tags['operator'] ?? tags['brand'] ?? 'Unknown'
-    const name     = tags['name'] ?? tags['brand'] ?? operator ?? 'Charging Station'
-    const network  = (operator + name).toLowerCase()
-
-    const conns = []
-    const connTypes = ['chademo','type2','ccs','tesla','schuko','type1']
-    connTypes.forEach(t => {
-      if (tags[`socket:${t}`] || tags[`socket:${t}:output`]) {
-        conns.push({
-          type:      t.toUpperCase().replace('TYPE2','Type 2').replace('SCHUKO','Schuko'),
-          powerKw:   parseFloat(tags[`socket:${t}:output`] ?? '0') || 0,
-          available: true,
-          total:     parseInt(tags[`socket:${t}`] ?? '1', 10),
-        })
-      }
-    })
-    if (conns.length === 0) conns.push({ type: 'Unknown', powerKw: 0, available: true, total: 1 })
+    const name     = tags['name'] ?? operator ?? 'Charging Station'
 
     return {
       id:             `osm-${el.id}`,
       name,
       position:       { lat, lng },
       operator,
-      connectors:     conns,
-      totalPorts:     isNaN(sockets) ? conns.length : sockets,
-      availablePorts: conns.length,
-      isTesla:        network.includes('tesla'),
+      connectors:     [{ type: 'Unknown', powerKw: 0, available: true, total: 1 }],
+      totalPorts:     1,
+      availablePorts: 1,
+      isTesla:        false,
       amenities:      [],
-      pricePerKwh:    undefined,
     }
   }).filter(Boolean)
 }
