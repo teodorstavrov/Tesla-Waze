@@ -48,7 +48,7 @@ const OVERPASS_MIRRORS = [
 ]
 
 function parseOverpassElements(elements) {
-  return (elements ?? []).map(el => {
+  const parsed = (elements ?? []).map(el => {
     const lat = el.lat ?? el.center?.lat
     const lng = el.lon ?? el.center?.lon
     if (lat == null || lng == null) return null
@@ -69,6 +69,8 @@ function parseOverpassElements(elements) {
       amenities:      [],
     }
   }).filter(Boolean)
+  console.log(`[Overpass] RAW: ${(elements ?? []).length}, PARSED: ${parsed.length}`)
+  return parsed
 }
 
 async function fetchOverpass(north, south, east, west) {
