@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet.markercluster'
@@ -30,7 +30,9 @@ function formatEVPopup(station: EVStation): string {
 export const EVMarkers: React.FC = () => {
   const map        = useMap()
   const evStations = useEventsStore(s => s.evStations)
+  const clusterRef = useRef<L.MarkerClusterGroup | null>(null)
 
+  // 1️⃣ Създаваш cluster само веднъж
   useEffect(() => {
     const cluster = L.markerClusterGroup({
       maxClusterRadius: 80,
@@ -38,17 +40,35 @@ export const EVMarkers: React.FC = () => {
       showCoverageOnHover: false,
     })
 
+    clusterRef.current = cluster
+    map.addLayer(cluster)
+
+    return () => {
+      map.removeLayer(cluster)
+    }
+  }, [map])
+
+  // 2️⃣ Обновяваш markers отделно
+  useEffect(() => {
+    if (!clusterRef.current) return
+
+    const cluster = clusterRef.current
+    cluster.clearLayers()
+
     evStations.forEach(station => {
-      const icon   = station.isTesla ? TeslaIcon : EVIcon(station.availablePorts, station.totalPorts)
-      const marker = L.marker([station.position.lat, station.position.lng], { icon })
+      const icon   = station.isTesla
+        ? TeslaIcon
+        : EVIcon(station.availablePorts, station.totalPorts)
+
+      const marker = L.marker(
+        [Number(station.position.lat), Number(station.position.lng)],
+        { icon }
+      )
+
       marker.bindPopup(formatEVPopup(station), { maxWidth: 240 })
       cluster.addLayer(marker)
     })
-
-    map.addLayer(cluster)
-
-    return () => { map.removeLayer(cluster) }
-  }, [map, evStations])
+  }, [evStations])
 
   return null
 }
