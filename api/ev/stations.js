@@ -51,7 +51,7 @@ function parseOverpassElements(elements) {
   return (elements ?? []).map(el => {
     const lat = el.lat ?? el.center?.lat
     const lng = el.lon ?? el.center?.lon
-    if (!lat || !lng) return null
+    if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return null
 
     const tags     = el.tags ?? {}
     const sockets  = parseInt(tags['capacity'] ?? tags['charging_station:output'] ?? '1', 10)
