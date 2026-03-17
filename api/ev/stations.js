@@ -47,64 +47,64 @@ const OVERPASS_MIRRORS = [
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ]
 
-async function fetchOverpass(north, south, east, west) {
-  const query = `[out:json][timeout:20];(node["amenity"="charging_station"](${south},${west},${north},${east});way["amenity"="charging_station"](${south},${west},${north},${east}););out center tags;`
+function parseOverpassElements(elements) {
+  return (elements ?? []).map(el => {
+    const lat = el.lat ?? el.center?.lat
+    const lng = el.lon ?? el.center?.lon
+    if (!lat || !lng) return null
 
-  for (const mirror of OVERPASS_MIRRORS) {
-    try {
-      const res = await fetch(mirror, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: AbortSignal.timeout(12000),
-      })
-      if (!res.ok) continue
-      const data = await res.json()
+    const tags     = el.tags ?? {}
+    const sockets  = parseInt(tags['capacity'] ?? tags['charging_station:output'] ?? '1', 10)
+    const operator = tags['operator'] ?? tags['brand'] ?? 'Unknown'
+    const name     = tags['name'] ?? tags['brand'] ?? operator ?? 'Charging Station'
+    const network  = (operator + name).toLowerCase()
 
-      return (data.elements ?? []).map(el => {
-        const lat = el.lat ?? el.center?.lat
-        const lng = el.lon ?? el.center?.lon
-        if (!lat || !lng) return null
-
-        const tags     = el.tags ?? {}
-        const sockets  = parseInt(tags['capacity'] ?? tags['charging_station:output'] ?? '1', 10)
-        const operator = tags['operator'] ?? tags['brand'] ?? 'Unknown'
-        const name     = tags['name'] ?? tags['brand'] ?? operator ?? 'Charging Station'
-        const network  = (operator + name).toLowerCase()
-
-        // Build connector list from OSM tags
-        const conns = []
-        const connTypes = ['chademo','type2','ccs','tesla','schuko','type1']
-        connTypes.forEach(t => {
-          if (tags[`socket:${t}`] || tags[`socket:${t}:output`]) {
-            conns.push({
-              type:      t.toUpperCase().replace('TYPE2','Type 2').replace('SCHUKO','Schuko'),
-              powerKw:   parseFloat(tags[`socket:${t}:output`] ?? '0') || 0,
-              available: true,
-              total:     parseInt(tags[`socket:${t}`] ?? '1', 10),
-            })
-          }
+    const conns = []
+    const connTypes = ['chademo','type2','ccs','tesla','schuko','type1']
+    connTypes.forEach(t => {
+      if (tags[`socket:${t}`] || tags[`socket:${t}:output`]) {
+        conns.push({
+          type:      t.toUpperCase().replace('TYPE2','Type 2').replace('SCHUKO','Schuko'),
+          powerKw:   parseFloat(tags[`socket:${t}:output`] ?? '0') || 0,
+          available: true,
+          total:     parseInt(tags[`socket:${t}`] ?? '1', 10),
         })
-        if (conns.length === 0) conns.push({ type: 'Unknown', powerKw: 0, available: true, total: 1 })
+      }
+    })
+    if (conns.length === 0) conns.push({ type: 'Unknown', powerKw: 0, available: true, total: 1 })
 
-        return {
-          id:            `osm-${el.id}`,
-          name,
-          position:      { lat, lng },
-          operator,
-          connectors:    conns,
-          totalPorts:    isNaN(sockets) ? conns.length : sockets,
-          availablePorts: conns.length,
-          isTesla:       network.includes('tesla'),
-          amenities:     [],
-          pricePerKwh:   undefined,
-        }
-      }).filter(Boolean)
-    } catch {
-      continue
+    return {
+      id:             `osm-${el.id}`,
+      name,
+      position:       { lat, lng },
+      operator,
+      connectors:     conns,
+      totalPorts:     isNaN(sockets) ? conns.length : sockets,
+      availablePorts: conns.length,
+      isTesla:        network.includes('tesla'),
+      amenities:      [],
+      pricePerKwh:    undefined,
     }
+  }).filter(Boolean)
+}
+
+async function fetchOverpass(north, south, east, west) {
+  // timeout:5 matches AbortSignal 6s — Overpass respects its own timeout first
+  const query = `[out:json][timeout:5];(node["amenity"="charging_station"](${south},${west},${north},${east});way["amenity"="charging_station"](${south},${west},${north},${east}););out center tags;`
+  const body  = `data=${encodeURIComponent(query)}`
+  const hdrs  = { 'Content-Type': 'application/x-www-form-urlencoded' }
+
+  // All mirrors in parallel — first success wins
+  const tryMirror = (mirror) =>
+    fetch(mirror, { method: 'POST', headers: hdrs, body, signal: AbortSignal.timeout(6000) })
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
+      .then(data => parseOverpassElements(data.elements))
+
+  try {
+    return await Promise.any(OVERPASS_MIRRORS.map(tryMirror))
+  } catch {
+    return []
   }
-  return []
 }
 
 // ─── Tesla Supercharger ───────────────────────────────────────────────────────
