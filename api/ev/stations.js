@@ -168,6 +168,7 @@ function dedup(stations) {
   const result = []
   for (const s of stations) {
     const duplicate = result.some(r =>
+      r.isTesla === s.isTesla &&
       Math.abs(r.position.lat - s.position.lat) < 0.0005 &&
       Math.abs(r.position.lng - s.position.lng) < 0.0005
     )
