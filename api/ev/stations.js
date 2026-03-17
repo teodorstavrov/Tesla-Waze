@@ -90,13 +90,13 @@ function parseOverpassElements(elements) {
 
 async function fetchOverpass(north, south, east, west) {
   // timeout:5 matches AbortSignal 6s — Overpass respects its own timeout first
-  const query = `[out:json][timeout:5];(node["amenity"="charging_station"](${south},${west},${north},${east});way["amenity"="charging_station"](${south},${west},${north},${east}););out center tags;`
+  const query = `[out:json][timeout:25];(node["amenity"="charging_station"](${south},${west},${north},${east});way["amenity"="charging_station"](${south},${west},${north},${east}););out center tags;`
   const body  = `data=${encodeURIComponent(query)}`
   const hdrs  = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
   // All mirrors in parallel — first success wins
   const tryMirror = (mirror) =>
-    fetch(mirror, { method: 'POST', headers: hdrs, body, signal: AbortSignal.timeout(6000) })
+    fetch(mirror, { method: 'POST', headers: hdrs, body, signal: AbortSignal.timeout(15000) })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(data => parseOverpassElements(data.elements))
 
