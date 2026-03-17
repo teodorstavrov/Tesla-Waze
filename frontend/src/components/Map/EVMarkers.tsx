@@ -30,41 +30,33 @@ function formatEVPopup(station: EVStation): string {
 export const EVMarkers: React.FC = () => {
   const map        = useMap()
   const evStations = useEventsStore(s => s.evStations)
-  const clusterRef = useRef<L.MarkerClusterGroup | null>(null)
 
-  // 1️⃣ Създаваш cluster само веднъж
-  useEffect(() => {
-    const cluster = L.markerClusterGroup({
+  // Initialize cluster during render — guaranteed non-null when effects run
+  const clusterRef = useRef<L.MarkerClusterGroup>(
+    L.markerClusterGroup({
       maxClusterRadius: 80,
       disableClusteringAtZoom: 15,
       showCoverageOnHover: false,
     })
+  )
 
-    clusterRef.current = cluster
+  // Add cluster to map once, remove on unmount
+  useEffect(() => {
+    const cluster = clusterRef.current
     map.addLayer(cluster)
-
-    return () => {
-      map.removeLayer(cluster)
-    }
+    return () => { map.removeLayer(cluster) }
   }, [map])
 
-  // 2️⃣ Обновяваш markers отделно
+  // Update markers whenever stations change
   useEffect(() => {
-    if (!clusterRef.current) return
-
     const cluster = clusterRef.current
     cluster.clearLayers()
-
     evStations.forEach(station => {
-      const icon   = station.isTesla
-        ? TeslaIcon
-        : EVIcon(station.availablePorts, station.totalPorts)
-
+      const icon   = station.isTesla ? TeslaIcon : EVIcon(station.availablePorts, station.totalPorts)
       const marker = L.marker(
         [Number(station.position.lat), Number(station.position.lng)],
         { icon }
       )
-
       marker.bindPopup(formatEVPopup(station), { maxWidth: 240 })
       cluster.addLayer(marker)
     })
