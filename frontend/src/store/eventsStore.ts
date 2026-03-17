@@ -52,7 +52,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   evStations: [],
   riskZones: [],
   userPosition: null,
-  mapCenter: { lat: 51.505, lng: -0.09 }, // default London — replaced on first GPS/map move
+  mapCenter: { lat: 42.698, lng: 23.322 }, // default Sofia — replaced on first GPS/map move
   userHeading: 0,
   userSpeed: 0,
   lastUpdated: 0,
