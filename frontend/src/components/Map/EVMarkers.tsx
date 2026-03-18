@@ -44,7 +44,16 @@ export const EVMarkers: React.FC = () => {
   useEffect(() => {
     const cluster = clusterRef.current
     map.addLayer(cluster)
-    return () => { map.removeLayer(cluster) }
+
+    // TEST: direct marker — if this shows, cluster is the issue
+    const testMarker = L.marker([42.698, 23.322]).addTo(map)
+    testMarker.bindPopup('TEST MARKER — Sofia center')
+    console.log('[EVMarkers] test marker added at Sofia')
+
+    return () => {
+      map.removeLayer(cluster)
+      map.removeLayer(testMarker)
+    }
   }, [map])
 
   // Update markers whenever stations change
