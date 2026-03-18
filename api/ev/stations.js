@@ -195,7 +195,18 @@ export default async function handler(req) {
 
   return new Response(JSON.stringify({
     stations,
-    _sources: { tesla: tesla.length, ocm: ocm.length, osm: osm.length, total: stations.length }
+    _sources: { tesla: tesla.length, ocm: ocm.length, osm: osm.length, total: stations.length },
+    _debug: {
+      ocmStatus:   ocmResult.status,
+      osmStatus:   osmResult.status,
+      teslaStatus: teslaResult.status,
+      ocmError:    ocmResult.status   === 'rejected' ? String(ocmResult.reason)   : null,
+      osmError:    osmResult.status   === 'rejected' ? String(osmResult.reason)   : null,
+      teslaError:  teslaResult.status === 'rejected' ? String(teslaResult.reason) : null,
+      counts:      { ocm: ocm.length, osm: osm.length, tesla: tesla.length },
+      bbox:        { north, south, east, west },
+      center:      { lat, lng },
+    },
   }), {
     headers: { ...HEADERS, 'Cache-Control': 'no-store' }
   })
