@@ -28,6 +28,7 @@ export function useDataPolling() {
   const reportsTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const evTimer      = useRef<ReturnType<typeof setInterval> | null>(null)
   const lastCenter   = useRef<LatLng | null>(null)
+  const lastEVCenter = useRef<LatLng | null>(null)
 
   // ── Live data: Waze only (10s) — re-runs on map move ──────────────────────
   useEffect(() => {
@@ -70,12 +71,13 @@ export function useDataPolling() {
     const fetchEVData = async () => {
       const evLayer = layers.find(l => l.id === 'ev_station')
       if (!evLayer?.enabled) return
+      // Skip if center hasn't moved more than ~10km since last EV fetch
+      if (lastEVCenter.current &&
+          Math.abs(center.lat - lastEVCenter.current.lat) < 0.09 &&
+          Math.abs(center.lng - lastEVCenter.current.lng) < 0.09) return
+      lastEVCenter.current = center
       try {
-        const bbox = getBBox(center.lat, center.lng, 20)
-        const res  = await fetch(`/api/ev/stations?north=${bbox.north}&south=${bbox.south}&east=${bbox.east}&west=${bbox.west}`)
-        const data = await res.json()
-        console.log('[EV] sources:', data._sources)
-        const stations = data.stations ?? []
+        const stations = await fetchEVStations(getBBox(center.lat, center.lng, 20))
         if (stations.length > 0) setEVStations(stations)
       } catch (err) {
         console.error('[DataPolling] EV error:', err)
