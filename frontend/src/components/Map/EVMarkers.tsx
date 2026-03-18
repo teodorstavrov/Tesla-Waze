@@ -59,6 +59,7 @@ export const EVMarkers: React.FC = () => {
   // Update markers whenever stations change
   useEffect(() => {
     const cluster = clusterRef.current
+    console.log('[EVMarkers] Effect2 evStations.length=', evStations.length)
     cluster.clearLayers()
     evStations.forEach(station => {
       const icon   = station.isTesla ? TeslaIcon : EVIcon(station.availablePorts, station.totalPorts)
