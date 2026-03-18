@@ -186,30 +186,14 @@ export default async function handler(req) {
     fetchTesla(north, south, east, west),
   ])
 
-  const ocm      = ocmResult.status   === 'fulfilled' ? ocmResult.value         : []
-  const osmData  = osmResult.status   === 'fulfilled' ? osmResult.value         : { stations: [], rawCount: -1 }
-  const osm      = osmData.stations
-  const osmRaw   = osmData.rawCount
-  const tesla    = teslaResult.status === 'fulfilled' ? teslaResult.value       : []
+  const ocm   = ocmResult.status   === 'fulfilled' ? ocmResult.value            : []
+  const osm   = osmResult.status   === 'fulfilled' ? osmResult.value.stations  : []
+  const tesla = teslaResult.status === 'fulfilled' ? teslaResult.value         : []
 
   // Tesla first (authoritative for Superchargers), then OCM (has availability), then OSM
   const stations = dedup([...tesla, ...ocm, ...osm])
 
-  return new Response(JSON.stringify({
-    stations,
-    _sources: { tesla: tesla.length, ocm: ocm.length, osm: osm.length, total: stations.length },
-    _debug: {
-      ocmStatus:   ocmResult.status,
-      osmStatus:   osmResult.status,
-      teslaStatus: teslaResult.status,
-      ocmError:    ocmResult.status   === 'rejected' ? String(ocmResult.reason)   : null,
-      osmError:    osmResult.status   === 'rejected' ? String(osmResult.reason)   : null,
-      teslaError:  teslaResult.status === 'rejected' ? String(teslaResult.reason) : null,
-      counts:      { ocm: ocm.length, osm: osm.length, osmRaw, tesla: tesla.length },
-      bbox:        { north, south, east, west },
-      center:      { lat, lng },
-    },
-  }), {
-    headers: { ...HEADERS, 'Cache-Control': 'no-store' }
+  return new Response(JSON.stringify({ stations }), {
+    headers: { ...HEADERS, 'Cache-Control': 's-maxage=300' }
   })
 }

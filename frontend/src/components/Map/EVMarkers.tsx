@@ -44,22 +44,12 @@ export const EVMarkers: React.FC = () => {
   useEffect(() => {
     const cluster = clusterRef.current
     map.addLayer(cluster)
-
-    // TEST: direct marker — if this shows, cluster is the issue
-    const testMarker = L.marker([42.698, 23.322]).addTo(map)
-    testMarker.bindPopup('TEST MARKER — Sofia center')
-    console.log('[EVMarkers] test marker added at Sofia')
-
-    return () => {
-      map.removeLayer(cluster)
-      map.removeLayer(testMarker)
-    }
+    return () => { map.removeLayer(cluster) }
   }, [map])
 
   // Update markers whenever stations change
   useEffect(() => {
     const cluster = clusterRef.current
-    console.log('[EVMarkers] Effect2 evStations.length=', evStations.length)
     cluster.clearLayers()
     evStations.forEach(station => {
       const icon   = station.isTesla ? TeslaIcon : EVIcon(station.availablePorts, station.totalPorts)
