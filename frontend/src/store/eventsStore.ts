@@ -19,6 +19,8 @@ interface EventsState {
   nextCamera: TrafficEvent | null
 
   setEvents: (events: TrafficEvent[]) => void
+  setLiveEvents: (events: TrafficEvent[]) => void
+  setCameraEvents: (events: TrafficEvent[]) => void
   setReports: (reports: TrafficEvent[]) => void
   addEvent: (event: TrafficEvent) => void
   removeEvent: (id: string) => void
@@ -65,12 +67,30 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   recenterRequested: false,
 
   setEvents: (events) => {
-    // Keep existing user_report events — they are managed by setReports, not this poll
     const existing = get().events
     const reports  = existing.filter(e => e.source === 'user_report')
     const newIds   = new Set(events.map(e => e.id))
     const keepReports = reports.filter(e => !newIds.has(e.id))
     set({ events: [...events, ...keepReports], lastUpdated: Date.now() })
+    get().computeNearby()
+  },
+
+  // Replace only live (waze/tomtom) events — preserves OSM cameras + user reports
+  setLiveEvents: (liveEvents) => {
+    set(s => {
+      const keep   = s.events.filter(e => e.source === 'osm' || e.source === 'user_report')
+      const newIds = new Set(liveEvents.map(e => e.id))
+      return { events: [...liveEvents, ...keep.filter(e => !newIds.has(e.id))], lastUpdated: Date.now() }
+    })
+    get().computeNearby()
+  },
+
+  // Replace only OSM camera events — preserves live events + user reports
+  setCameraEvents: (cameras) => {
+    set(s => {
+      const keep = s.events.filter(e => e.source !== 'osm')
+      return { events: [...cameras, ...keep], lastUpdated: Date.now() }
+    })
     get().computeNearby()
   },
 

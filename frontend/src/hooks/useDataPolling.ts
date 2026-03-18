@@ -5,9 +5,10 @@ import { fetchEvents, fetchWazeAlerts, fetchReports, fetchEVStations, fetchRiskZ
 import { wsService } from '../services/websocket'
 import { BoundingBox, LatLng } from '../types'
 
-const LIVE_INTERVAL    = 10_000   // 10s  — Waze + cameras (location-dependent, fast-changing)
-const REPORTS_INTERVAL = 60_000   // 60s  — user reports (location-independent, slow-changing)
-const EV_INTERVAL      = 300_000  // 5min — EV stations (static data)
+const LIVE_INTERVAL    = 10_000   // 10s  — Waze alerts only (fast-changing)
+const CAMERAS_INTERVAL = 300_000  // 5min — OSM speed cameras (static)
+const REPORTS_INTERVAL = 60_000   // 60s  — user reports
+const EV_INTERVAL      = 300_000  // 5min — EV stations (static)
 
 function getBBox(lat: number, lng: number, radiusKm = 15): BoundingBox {
   const delta = radiusKm / 111
@@ -20,14 +21,15 @@ function getBBox(lat: number, lng: number, radiusKm = 15): BoundingBox {
 }
 
 export function useDataPolling() {
-  const { mapCenter, setEvents, setReports, setEVStations, setRiskZones, setLoading, setError } = useEventsStore()
+  const { mapCenter, setLiveEvents, setCameraEvents, setReports, setEVStations, setRiskZones, setLoading, setError } = useEventsStore()
   const { layers } = useUIStore()
   const liveTimer    = useRef<ReturnType<typeof setInterval> | null>(null)
+  const camerasTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const reportsTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const evTimer      = useRef<ReturnType<typeof setInterval> | null>(null)
   const lastCenter   = useRef<LatLng | null>(null)
 
-  // ── Live data: Waze + cameras — re-runs on map move ────────────────────────
+  // ── Live data: Waze only (10s) — re-runs on map move ──────────────────────
   useEffect(() => {
     const center = mapCenter
     const bbox   = getBBox(center.lat, center.lng)
@@ -44,20 +46,24 @@ export function useDataPolling() {
     const fetchLiveData = async () => {
       try {
         setLoading(true)
-        const [alerts, cameras] = await Promise.allSettled([
-          fetchWazeAlerts(getBBox(center.lat, center.lng)),
-          fetchEvents(getBBox(center.lat, center.lng)),
-        ])
-        setEvents([
-          ...(alerts.status  === 'fulfilled' ? alerts.value  : []),
-          ...(cameras.status === 'fulfilled' ? cameras.value : []),
-        ])
+        const alerts = await fetchWazeAlerts(getBBox(center.lat, center.lng))
+        setLiveEvents(alerts)
         setError(null)
       } catch (err) {
         setError('Failed to fetch events')
         console.error('[DataPolling] Live error:', err)
       } finally {
         setLoading(false)
+      }
+    }
+
+    // OSM speed cameras — static, fetched every 5min, never overwrites live events
+    const fetchCameraData = async () => {
+      try {
+        const cameras = await fetchEvents(getBBox(center.lat, center.lng))
+        if (cameras.length > 0) setCameraEvents(cameras)
+      } catch (err) {
+        console.error('[DataPolling] Cameras error:', err)
       }
     }
 
@@ -84,18 +90,22 @@ export function useDataPolling() {
     }
 
     fetchLiveData()
+    fetchCameraData()
     fetchEVData()
     fetchRiskData()
 
-    if (liveTimer.current) clearInterval(liveTimer.current)
-    if (evTimer.current)   clearInterval(evTimer.current)
+    if (liveTimer.current)    clearInterval(liveTimer.current)
+    if (camerasTimer.current) clearInterval(camerasTimer.current)
+    if (evTimer.current)      clearInterval(evTimer.current)
 
-    liveTimer.current = setInterval(fetchLiveData, LIVE_INTERVAL)
-    evTimer.current   = setInterval(fetchEVData,   EV_INTERVAL)
+    liveTimer.current    = setInterval(fetchLiveData,    LIVE_INTERVAL)
+    camerasTimer.current = setInterval(fetchCameraData,  CAMERAS_INTERVAL)
+    evTimer.current      = setInterval(fetchEVData,      EV_INTERVAL)
 
     return () => {
-      if (liveTimer.current) clearInterval(liveTimer.current)
-      if (evTimer.current)   clearInterval(evTimer.current)
+      if (liveTimer.current)    clearInterval(liveTimer.current)
+      if (camerasTimer.current) clearInterval(camerasTimer.current)
+      if (evTimer.current)      clearInterval(evTimer.current)
     }
   }, [mapCenter.lat, mapCenter.lng]) // eslint-disable-line react-hooks/exhaustive-deps
 
