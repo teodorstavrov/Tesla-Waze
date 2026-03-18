@@ -7,7 +7,7 @@ const HEADERS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Orig
 // ─── OpenChargeMap ────────────────────────────────────────────────────────────
 async function fetchOCM(lat, lng, apiKey) {
   const url = `https://api.openchargemap.io/v3/poi?output=json&latitude=${lat}&longitude=${lng}&distance=20&distanceunit=km&maxresults=200&compact=true&verbose=false${apiKey ? `&key=${apiKey}` : ''}`
-  const res  = await fetch(url, { signal: AbortSignal.timeout(7000) })
+  const res  = await fetch(url, { signal: AbortSignal.timeout(10000) })
   if (!res.ok) throw new Error(`OCM ${res.status}`)
   const data = await res.json()
 
@@ -44,7 +44,7 @@ async function fetchOCM(lat, lng, apiKey) {
 const OVERPASS_MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
 ]
 
 function parseOverpassElements(elements) {
