@@ -197,6 +197,6 @@ export default async function handler(req) {
     stations,
     _sources: { tesla: tesla.length, ocm: ocm.length, osm: osm.length, total: stations.length }
   }), {
-    headers: { ...HEADERS, 'Cache-Control': 's-maxage=300' }
+    headers: { ...HEADERS, 'Cache-Control': 'no-store' }
   })
 }
